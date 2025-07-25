@@ -1,0 +1,39 @@
+
+services:
+  mysql-db:
+    image: asafnr567/mysql-db:1.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  flask-api:
+    image: asafnr567/flask-api:1.0
+    container_name: flask-api
+    environment:
+      DB_HOST: ${DB_HOST}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      CARS_DB: ${CARS_DB}
+      DB_PORT: ${DB_PORT}
+    depends_on:
+      - mysql-db
+    volumes:
+      - ./backend-API-container/images:/backend-API-container/images
+    ports:
+      - "5000:5000"
+    restart: on-failure
+
+volumes:
+  db-data:
