@@ -305,7 +305,7 @@ def serve_image(filename):
     image_path = carApi.config["IMAGES_FOLDER"]
 
     if not image_path:
-        return jsonify({"error": "Image folder is not configured"})
+        return jsonify({"error": "Image folder is not configured"}), 500
     try:
         return send_from_directory(image_path, filename)
     
