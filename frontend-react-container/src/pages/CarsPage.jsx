@@ -1,10 +1,13 @@
 import React from "react";
+import { useCarsWithImages } from "../services/getData"
 import CarCard from "../components/CarCard";
 
 
-export default function CarsPage({ cars }) {
+export default function CarsPage() {
 
-    let localDB = [
+    const cars = useCarsWithImages();
+
+    let locaTestinglDB = [
     {
         "cylinders": 4,
         "description": "Reliable compact sedan, great fuel economy.",
@@ -64,7 +67,7 @@ export default function CarsPage({ cars }) {
     return (
         <div className="cars-box">
         {
-            localDB.map((c, index) => {
+            cars.map((c, index) => {
                 return (
                     <CarCard key={index} className='car-item' car={c} />
                 )

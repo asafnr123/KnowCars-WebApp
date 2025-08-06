@@ -1,7 +1,7 @@
 
 services:
   mysql-db:
-    image: asafnr567/mysql-db:1.0
+    image: asafnr567/mysql-db:latest
     container_name: mysql-db
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -19,7 +19,7 @@ services:
 
 
   flask-api:
-    image: asafnr567/flask-api:1.0
+    image: asafnr567/flask-api:latest
     container_name: flask-api
     environment:
       DB_HOST: ${DB_HOST}
