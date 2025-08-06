@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
 import uuid
 from car import Car
 from mysqlConnection import get_connection
@@ -6,6 +7,7 @@ from mysqlConnection import get_connection
 
 carApi = Flask(__name__)
 carApi.config['IMAGES_FOLDER'] = './images'
+CORS(carApi)
 
 @carApi.route("/", methods=['GET'])
 def Home_Page():
@@ -297,7 +299,7 @@ def get_all_car_with_images():
 
 
 #actually routing the image:
-@carApi.route('/images/<filename>', methods=['GET'])
+@carApi.route('/api/images/<filename>', methods=['GET'])
 def serve_image(filename):
     
     image_path = carApi.config["IMAGES_FOLDER"]
