@@ -16,6 +16,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - backend-net
 
 
   flask-api:
@@ -34,6 +36,13 @@ services:
     ports:
       - "5000:5000"
     restart: on-failure
+    networks:
+      - backend-net
+      - frontend-net
 
 volumes:
   db-data:
+
+networks:
+  backend-net: {}
+  frontend-net: {}
