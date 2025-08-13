@@ -12,7 +12,9 @@ services:
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [
+        "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,8 +22,9 @@ services:
       - backend-net
 
 
+
   flask-api:
-    image: asafnr567/flask-api:latest
+    image: asafnr567/flask-api:2.0
     container_name: flask-api
     environment:
       DB_HOST: ${DB_HOST}
@@ -30,16 +33,36 @@ services:
       CARS_DB: ${CARS_DB}
       DB_PORT: ${DB_PORT}
     depends_on:
-      - mysql-db
+      mysql-db:
+        condition: service_healthy
     volumes:
       - ./backend-API-container/images:/backend-API-container/images
     ports:
       - "5000:5000"
+    healthcheck:
+      test: [
+        "CMD", "curl", "-f", "http://localhost:5000/api/health"
+      ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: on-failure
     networks:
       - backend-net
       - frontend-net
-
+      
+  nginx:
+    build: ./
+    container_name: nginx
+    depends_on:
+      flask-api:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    restart: on-failure
+    networks:
+      - frontend-net
+      
 volumes:
   db-data:
 

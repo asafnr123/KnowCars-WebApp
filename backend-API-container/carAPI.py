@@ -319,8 +319,24 @@ def serve_image(filename):
         return jsonify({"error": f"Unexpected server error {e}"}), 500
 
 
+#route to check the status of the api
+@carApi.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({"message": "Ready"}), 200
 
 
+#test function to get some headers:
+@carApi.route('/api/headers', methods=['GET'])
+def get_headers():
+    headers = {
+        "Host": request.headers.get("Host"),
+        "X-Real-IP": request.headers.get("X-Real-IP"),
+        "X-Forwarded-For": request.headers.get("X-Forwarded-For"),
+        "X-Forwarded-Proto": request.headers.get("X-Forwarded-Proto"),
+        "X-Forwarded-Port": request.headers.get("X-Forwarded-Port")
+    }
+
+    return jsonify(headers), 200
 
 
 if __name__ == "__main__":
