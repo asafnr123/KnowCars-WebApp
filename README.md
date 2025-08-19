@@ -41,7 +41,7 @@ KnowCars is a web application that displays information about cars. It consists 
 
 - [Docker](https://www.docker.com/get-started)
 - [Docker Compose](https://docs.docker.com/compose/install/)
-- Environment variables for MySQL and API configuration:
+- Add a .env file for environment variables for MySQL and API configuration:
 
 ```env
 MYSQL_ROOT_PASSWORD=your_root_password
