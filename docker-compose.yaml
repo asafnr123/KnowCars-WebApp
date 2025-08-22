@@ -52,8 +52,8 @@ services:
       - frontend-net
       
   nginx:
-    build: ./
-    container_name: nginx
+    image: asafnr567/nginx-srv
+    container_name: nginx-srv
     depends_on:
       flask-api:
         condition: service_healthy
