@@ -1,7 +1,7 @@
 
 services:
   mysql-db:
-    image: asafnr567/mysql-db:latest
+    image: asafnr567/mysql-db:2.0
     container_name: mysql-db
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -46,6 +46,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
     restart: on-failure
     networks:
       - backend-net
