@@ -44,7 +44,7 @@ KnowCars is a web application that displays information about cars. It consists 
 
 ```env
 MYSQL_ROOT_PASSWORD=your_root_password
-MYSQL_USER=your_user
+MYSQL_USER=regular
 MYSQL_PASSWORD=your_password
 DB_HOST=mysql-db
 DB_PORT=3306
