@@ -24,7 +24,7 @@ services:
 
 
   flask-api:
-    image: asafnr567/flask-api:2.0
+    image: asafnr567/flask-api:2.1
     container_name: flask-api
     environment:
       DB_HOST: ${DB_HOST}

@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY carAPI.py .
 COPY car.py .	
 COPY mysqlConnection.py .
+COPY images/ images/
 
 
 
