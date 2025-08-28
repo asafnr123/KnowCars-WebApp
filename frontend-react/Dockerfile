@@ -1,5 +1,5 @@
 FROM node:18-alpine
-x
+
 WORKDIR /front-app
 
 COPY package-lock.json ./
