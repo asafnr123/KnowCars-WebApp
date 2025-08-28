@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 export function useCarsWithImages() {
     
-    let url = "http://localhost:5000/api/cars_with_images";
+    let url = "api/cars_with_images";
     const [cars_with_images, set_cars_with_images] = useState([]);
 
 
