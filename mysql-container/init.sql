@@ -90,18 +90,18 @@ SELECT SLEEP(0.5);
 
 -- Seed default carImages data safely
 INSERT INTO carImages (car_id, image_url)
-SELECT * FROM (SELECT '123e4568-e89b-12d3-a456-426614174000' AS car_id, 'http://localhost:5000/api/images/toyota-corolla-2021.jpg' AS image_url) AS tmp
-WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='123e4568-e89b-12d3-a456-426614174000' AND image_url='http://localhost:5000/api/images/toyota-corolla-2021.jpg');
+SELECT * FROM (SELECT '123e4568-e89b-12d3-a456-426614174000' AS car_id, '/api/images/toyota-corolla-2021.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='123e4568-e89b-12d3-a456-426614174000' AND image_url='/api/images/toyota-corolla-2021.jpg');
 
 INSERT INTO carImages (car_id, image_url)
-SELECT * FROM (SELECT '223e4567-e89b-12d3-a456-426614174000' AS car_id, 'http://localhost:5000/api/images/honda-civic-2022.jpg' AS image_url) AS tmp
-WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='223e4567-e89b-12d3-a456-426614174000' AND image_url='http://localhost:5000/api/images/honda-civic-2022.jpg');
+SELECT * FROM (SELECT '223e4567-e89b-12d3-a456-426614174000' AS car_id, '/api/images/honda-civic-2022.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='223e4567-e89b-12d3-a456-426614174000' AND image_url='/api/images/honda-civic-2022.jpg');
 
 INSERT INTO carImages (car_id, image_url)
-SELECT * FROM (SELECT 'e14e2276-1055-4a93-a686-df4b4bf19d2b' AS car_id, 'http://localhost:5000/api/images/toyota-supra-2010.jpg' AS image_url) AS tmp
-WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='e14e2276-1055-4a93-a686-df4b4bf19d2b' AND image_url='http://localhost:5000/api/images/toyota-supra-2010.jpg');
+SELECT * FROM (SELECT 'e14e2276-1055-4a93-a686-df4b4bf19d2b' AS car_id, '/api/images/toyota-supra-2010.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='e14e2276-1055-4a93-a686-df4b4bf19d2b' AND image_url='/api/images/toyota-supra-2010.jpg');
 
 INSERT INTO carImages (car_id, image_url)
-SELECT * FROM (SELECT '323e4567-e89b-12d3-a456-426614174000' AS car_id, 'http://localhost:5000/api/images/ford-focus-2020.jpg' AS image_url) AS tmp
-WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='323e4567-e89b-12d3-a456-426614174000' AND image_url='http://localhost:5000/api/images/ford-focus-2020.jpg');
+SELECT * FROM (SELECT '323e4567-e89b-12d3-a456-426614174000' AS car_id, '/api/images/ford-focus-2020.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='323e4567-e89b-12d3-a456-426614174000' AND image_url='/api/images/ford-focus-2020.jpg');
 
