@@ -10,7 +10,6 @@ function CarDetailsPage() {
   const [selectedCar, setSelectedCar] = useState(null)
   const [dataLoaded, setDataLoaded] = useState(false)
 
-  
   useEffect(() => {
     if (cars && cars.length > 0) {
         const foundCar = cars.find((c) => String(c.id) === String(car_id));
