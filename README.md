@@ -1,26 +1,29 @@
-# KnowCars
+# KnowCars on Kubernetes 
 
-KnowCars is a web application that displays information about cars. It consists of a **React frontend** served by **Nginx**, a **Flask API backend**, and a **MySQL database**, all containerized with Docker.
+KnowCars is a web application that displays information about cars.  
+It consists of a **React frontend** served by **Nginx**, a **Flask API backend**, and a **MySQL database**, all orchestrated with **Kubernetes**.
 
 ---
 
 ## Table of Contents
 
-- [Features](#features)
+- [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
+- [Kubernetes Resources](#kubernetes-resources)
 - [Setup](#setup)
-- [Docker Compose](#docker-compose)
+- [Accessing the App](#accessing-the-app)
 - [API Endpoints](#api-endpoints)
 - [Database](#database)
 
 ---
 
+## Architecture
 ## Features
 
 - Display a list of cars with detailed information.
 - Retrieve, create, update, and delete car entries via the Flask API.
 - Serve car images alongside car details.
-- Fully containerized and easy to deploy using Docker.
+- Fully containerized and image management with docker
 
 ---
 
@@ -37,38 +40,44 @@ KnowCars is a web application that displays information about cars. It consists 
 ## Setup
 
 ### Prerequisites
+- [Kubernetes cluster](https://kubernetes.io/docs/setup/) (local via Minikube or remote)  
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) installed and configured  
 
-- [Docker](https://www.docker.com/get-started)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-- Add a .env file for environment variables for MySQL and API configuration:
+### Deploy
+Apply the manifests in the correct order:  
 
-```env
-MYSQL_ROOT_PASSWORD=your_root_password
-MYSQL_USER=regular
-MYSQL_PASSWORD=your_password
-DB_HOST=mysql-db
-DB_PORT=3306
-CARS_DB=knowCarsDB
+```bash
+kubectl apply -f k8s/mysql-secret.yaml
+kubectl apply -f k8s/mysql-statefulset.yaml
+kubectl apply -f k8s/mysql-service.yaml
+
+kubectl apply -f k8s/flask-configmap.yaml
+kubectl apply -f k8s/flask-deployment.yaml
+kubectl apply -f k8s/flask-service.yaml
+
+kubectl apply -f k8s/nginx-deployment.yaml
+kubectl apply -f k8s/nginx-service.yaml
 ```
 
 ---
 
-## Docker-Compose
 
-This project uses **Docker Compose** to orchestrate its services:
+## Kubernetes Resources
 
-- **mysql-db** → Runs a MySQL database with a persistent volume (`db-data`).
-- **flask-api** → Flask backend service that exposes a REST API, connects to MySQL, and provides car data.
-- **nginx** → Serves the React frontend build and proxies requests to the Flask API if configured.
+### MySQL
+- **StatefulSet** → Ensures stable identity and persistent data.  
+- **volumeClaimTemplate** → Provides persistent storage.  
+- **ClusterIP Service** → Internal communication for the API.  
+- **Secret** → Stores MySQL root password, user, and database credentials.  
 
-### Networks
+### Flask API
+- **Deployment** → Manages Flask API pods.  
+- **ClusterIP Service** → Exposes the API internally to Nginx.  
+- **ConfigMap** → Stores database connection settings.  
 
-Two Docker networks are defined:
-
-- **backend-net** → Internal communication between Flask and MySQL.
-- **frontend-net** → Communication between Flask and Nginx/frontend.
-
-This separation improves security and isolates concerns between services.
+### Nginx (React Frontend)
+- **Deployment** → Serves React build and proxies API requests.  
+- **NodePort Service** → Exposes the frontend externally for access in the browser.  
 
 ---
 
@@ -94,18 +103,4 @@ The Flask API exposes multiple endpoints to interact with the cars database.
 
  ---
 
- ## Database
-
- Database
-
-The backend uses MySQL with a connection pool (pool_size=7).
-The Flask app reads its configuration from environment variables (DB_HOST, DB_PORT, MYSQL_USER, MYSQL_PASSWORD, CARS_DB).
-
-Tables
-
-cars → Stores main car data (make, model, year, horsepower, etc.).
-
-carImages → Stores image URLs linked to cars via car_id.
-
-The API joins these two tables when fetching cars with images (/api/cars_with_images).
 
