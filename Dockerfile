@@ -1,4 +1,4 @@
-
+# Nginx Dockerfile
 FROM node:18-alpine AS react_build
 
 WORKDIR /front-app
