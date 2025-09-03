@@ -104,7 +104,7 @@ jobs:
 
             if [ "$http_status" -eq 200 ]; then
               echo "Nginx is ready"
-              break
+              exit 0
             fi
 
             echo "Waiting for nginx..."
