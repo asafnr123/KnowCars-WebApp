@@ -1,2 +1,5 @@
 .env
 backend-API-container/venv
+terraform/vpc/.terraform/
+terraform/vpc/terraform.tfstate
+terraform/vpc/terraform.tfstate.backup
