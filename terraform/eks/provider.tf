@@ -7,3 +7,8 @@ terraform {
   }
   required_version = ">= 1.6.0"
 }
+
+
+provider aws {
+  region = "eu-central-1"
+}
