@@ -10,7 +10,7 @@ resource "aws_eks_cluster" "this" {
   version  = "1.27"
 
   vpc_config {
-    subnet_ids = var.private_subnets
+    subnet_ids = var.private_subnets_ids
   }
   
   tags = {

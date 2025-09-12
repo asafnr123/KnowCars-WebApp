@@ -24,6 +24,6 @@ variable "vpc_id" {
 
 variable "vpc_cidr" {
   description = "VPC CIDR"
-  type        = list(string)
+  type        = string
 }
 

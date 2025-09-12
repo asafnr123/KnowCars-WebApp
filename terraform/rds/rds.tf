@@ -6,18 +6,15 @@ data "aws_security_group" "rds_sg" {
    }
 }
 
-# Get private subnets 
-data "aws_subnets" "private" {
-  filter {
-    name   = "tag:Name"
-    values = ["knowCars-private-1", "knowCars-private-2"]  
-  }
+module "vpc" {
+  source = "../vpc"
+  vpc_cidr = var.vpc_cidr
 }
 
 
 resource "aws_db_subnet_group" "mysql" {
   name       = "knowcars-mysql-subnets"
-  subnet_ids = data.aws_subnets.private.ids
+  subnet_ids = module.vpc.private_subnets_ids
 }
 
 resource "aws_db_instance" "mysql" {
