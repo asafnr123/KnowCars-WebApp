@@ -14,8 +14,8 @@ resource "aws_route_table" "public" {
 
 # Associate public subnets with public route table
 resource "aws_route_table_association" "public_assoc" {
-  count          = length(var.public_subnet_ids)
-  subnet_id         = var.public_subnet_ids[count.index]
+  count          = length(var.public_subnets_ids)
+  subnet_id         = var.public_subnets_ids[count.index]
   route_table_id    = aws_route_table.public.id
 }
 
@@ -36,8 +36,8 @@ resource "aws_route" "private_internet_access" {
 
 # Associate private subnets with private route table
 resource "aws_route_table_association" "private_assoc" {
-  count          = length(var.private_subnet_ids)
-  subnet_id         = var.private_subnet_ids[count.index]
+  count          = length(var.private_subnets_ids)
+  subnet_id         = var.private_subnets_ids[count.index]
   route_table_id    = aws_route_table.private.id
 }
 

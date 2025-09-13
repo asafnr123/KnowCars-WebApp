@@ -3,7 +3,7 @@ variable "eip_id" {
   type        = string
 }
 
-variable "public_subnet_ids" {
+variable "public_subnets_ids" {
   description = "List of public subnets IDs"
   type        = list(string)
 }

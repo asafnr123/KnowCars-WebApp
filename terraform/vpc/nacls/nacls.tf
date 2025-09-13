@@ -64,13 +64,13 @@ resource "aws_network_acl_rule" "private_outbound_local" {
 # Associations
 resource "aws_network_acl_association" "public_assoc" {
   count       = length(var.public_subnet_ids)
-  subnet_id      = var.public_subnet_ids[count.index]
+  subnet_id      = var.public_subnets_ids[count.index]
   network_acl_id = aws_network_acl.public.id
 }
 
 resource "aws_network_acl_association" "private_assoc" {
   count          = length(var.private_subnet_ids)
-  subnet_id         = var.private_subnet_ids[count.index]
+  subnet_id         = var.private_subnets_ids[count.index]
   network_acl_id = aws_network_acl.private.id
 }
 

@@ -11,8 +11,8 @@ resource "aws_vpc" "main" {
 
 module "subnets" {
   source = "./subnets"
-  public_subnets = var.public_subnets
-  private_subnets = var.private_subnets
+  public_subnets = var.public_subnets_cidr
+  private_subnets = var.private_subnets_cidr
   vpc_id = aws_vpc.main.id
   azs = var.azs
 }
