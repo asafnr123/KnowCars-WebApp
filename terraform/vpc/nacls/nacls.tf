@@ -1,6 +1,6 @@
 # Public NACL
 resource "aws_network_acl" "public" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = var.vpc_id
 
   tags = {
     Name = "knowCars-public-nacl"
@@ -33,7 +33,7 @@ resource "aws_network_acl_rule" "public_outbound" {
 
 # Private NACL
 resource "aws_network_acl" "private" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = var.vpc_id
 
   tags = {
     Name = "knowCars-private-nacl"
@@ -63,14 +63,14 @@ resource "aws_network_acl_rule" "private_outbound_local" {
 
 # Associations
 resource "aws_network_acl_association" "public_assoc" {
-  count          = length(aws_subnet.public)
-  subnet_id      = aws_subnet.public[count.index].id
+  count       = length(var.public_subnet_ids)
+  subnet_id      = var.public_subnet_ids[count.index]
   network_acl_id = aws_network_acl.public.id
 }
 
 resource "aws_network_acl_association" "private_assoc" {
-  count          = length(aws_subnet.private)
-  subnet_id      = aws_subnet.private[count.index].id
+  count          = length(var.private_subnet_ids)
+  subnet_id         = var.private_subnet_ids[count.index]
   network_acl_id = aws_network_acl.private.id
 }
 

@@ -1,4 +1,3 @@
-# Get the RDS security group
 data "aws_security_group" "rds_sg" {
   filter {
     name = "tag:Name"
@@ -6,10 +5,18 @@ data "aws_security_group" "rds_sg" {
    }
 }
 
+# Get the VPC ID
 module "vpc" {
   source = "../vpc"
   vpc_cidr = var.vpc_cidr
 }
+
+# Get the RDS security group
+module "rds_sg" {
+  source = "../security_groups/rds"
+  vpc_id = module.vpc.vpc_id
+}
+
 
 
 resource "aws_db_subnet_group" "mysql" {
