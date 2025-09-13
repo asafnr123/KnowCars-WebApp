@@ -7,6 +7,9 @@ resource "aws_eks_cluster" "this" {
     subnet_ids = var.private_subnets_ids
   }
 
+  tags = {
+    Name = var.eks_cluster_name
+  }
   
 }
 
