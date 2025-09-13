@@ -9,7 +9,7 @@ resource "aws_security_group" "flask_sg" {
     from_port = 5000    # Flask API port
     to_port = 5000
     protocol = "tcp"
-    security_groups  = [var.nginx_sg]
+    security_groups  = var.nginx_sg
   }
 
   # Outbound: allowed for dockerhub
@@ -27,7 +27,7 @@ resource "aws_security_group" "flask_sg" {
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = var.vpc_cidr
 }
 
   tags = {

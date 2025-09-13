@@ -3,7 +3,7 @@ variable "vpc_id" {
 }
 
 variable "flask_sg" {
-  type        = string
+  type        = list(string)
   description = "Security Group ID of Flask"
 }
 

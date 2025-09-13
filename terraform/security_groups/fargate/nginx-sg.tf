@@ -26,7 +26,7 @@ resource "aws_security_group" "nginx_sg" {
     from_port = 5000
     to_port = 5000
     protocol = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = var.vpc_cidr
   }
 
   # Outbound: allow traffic to Dockerhub

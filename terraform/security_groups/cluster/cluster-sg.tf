@@ -16,7 +16,7 @@ resource "aws_security_group" "eks_cluster_sg" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    security_groups = var.fargat_sg
+    security_groups = var.nginx_sg
     description = "Allow Fargate pods to communicate with EKS API"
   }
 

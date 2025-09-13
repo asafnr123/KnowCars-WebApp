@@ -3,10 +3,10 @@ variable "vpc_id" {
 }
 
 variable "nginx_sg" {
-  type        = string
+  type        = list(string)
   description = "Security Group ID of Nginx"
 }
 
 variable "vpc_cidr" {
-  type = string
+  type = list(string)
 }

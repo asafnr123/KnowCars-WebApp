@@ -1,11 +1,14 @@
 variable "flask_sg" {
-  type        = string
+  type        = list(string)
   description = "Security Group ID of worker nodes"
 }
 
 
-variable "fargate_sg" {
-  type        = string
+variable "nginx_sg" {
+  type        = list(string)
   description = "Security Group ID of fargate"
 }
 
+variable "vpc_id" {
+  type = string
+}
