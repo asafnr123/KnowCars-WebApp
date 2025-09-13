@@ -19,9 +19,4 @@ variable "flask_instance_type" {
   default = "t3.medium"
 }
 
-variable "eks_cluster" {
-  description = "Cluster resource to depend on"
-  type        = list(any)
-}
-
 

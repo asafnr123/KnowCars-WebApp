@@ -3,13 +3,13 @@ resource "aws_security_group" "flask_sg" {
   description = "Allow Flask API traffic only from Nginx pods"
   vpc_id = var.vpc_id
 
-  # Ingress: Only from Nginx SG
+  # Ingress: Only from fargate-pods SG
   ingress {
     description = "Allow traffic from Nginx pods"
     from_port = 5000    # Flask API port
     to_port = 5000
     protocol = "tcp"
-    security_groups  = var.nginx_sg
+    security_groups  = [var.cluster_sg]
   }
 
   # Outbound: allowed for dockerhub
@@ -27,7 +27,7 @@ resource "aws_security_group" "flask_sg" {
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
-    cidr_blocks = var.vpc_cidr
+    cidr_blocks     = var.private_subnets_cidr
 }
 
   tags = {

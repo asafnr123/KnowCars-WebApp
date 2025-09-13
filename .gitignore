@@ -2,5 +2,5 @@
 backend-API-container/venv
 terraform/*/.terraform/
 terraform/*/terraform.tfstate
-terraform/*/terraform.tfstate.backup
+terraform/*/terraform.tfstate.*
 terraform/*/*.tfvars

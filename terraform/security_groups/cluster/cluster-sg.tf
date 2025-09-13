@@ -2,31 +2,32 @@ resource "aws_security_group" "eks_cluster_sg" {
   name   = "knowcars-cluster-sg"
   description = "Allow allows traffic from worker nodes and fargate"
   vpc_id = var.vpc_id
-
-  # Allow worker nodes to talk to the cluster API
+  
+  # Allow ALB traffic to pods (Nginx)
   ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    security_groups = var.flask_sg
-    description = "Allow worker nodes to communicate with EKS API"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [var.alb_sg]
+    description     = "Allow traffic from ALB"
   }
 
-  # Allow Fargate pods to talk to the cluster API
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    security_groups = var.nginx_sg
-    description = "Allow Fargate pods to communicate with EKS API"
-  }
-
-  # Allow all outbound (default)
+  # Allow pods to communicate with Flask EC2 (port 5000)
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port       = 5000
+    to_port         = 5000
+    protocol        = "tcp"
+    cidr_blocks     = var.private_subnets_cidr
+    description     = "Allow pods to reach Flask API"
+  }
+
+  # Allow internet access for dockerhub
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTPS for DockerHub"
   }
   
   tags = {

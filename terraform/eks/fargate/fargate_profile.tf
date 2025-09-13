@@ -1,12 +1,8 @@
-data "aws_iam_role" "fargate-pod-role" {
-  name ="knowcars-eks-fargate-pod-role"
-}
-
 
 resource "aws_eks_fargate_profile" "nginx" {
-  cluster_name           = aws_eks_cluster.this.name
+  cluster_name           = var.cluster_name
   fargate_profile_name   = "nginx-fargate"
-  pod_execution_role_arn = data.aws_iam_role.fargate-pod-role.arn
+  pod_execution_role_arn = var.fargate_pod_role
   subnet_ids             = var.private_subnets_ids
 
   selector {
@@ -20,9 +16,6 @@ resource "aws_eks_fargate_profile" "nginx" {
     Name = "nginx-fargate"
   }
   
-  depends_on = [
-    aws_eks_cluster.this
-  ]
   
 }
 

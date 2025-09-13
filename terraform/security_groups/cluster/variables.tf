@@ -1,11 +1,12 @@
-variable "flask_sg" {
-  type        = list(string)
-  description = "Security Group ID of worker nodes"
+
+variable "private_subnets_cidr" {
+  type = list(string)
+  default = ["10.0.0.128/26", "10.0.0.192/26"]
 }
 
 
-variable "nginx_sg" {
-  type        = list(string)
+variable "alb_sg" {
+  type        = string
   description = "Security Group ID of fargate"
 }
 

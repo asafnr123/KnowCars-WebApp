@@ -13,12 +13,11 @@ resource "aws_eks_node_group" "flask_nodes" {
   }
   
   labels = {
-    role = "flask-api"
+    role = "flask-api-node"
   }
   
   tags = {
     Name = "flask-api-nodes"
   }
   
-  depends_on = var.eks_cluster
 }

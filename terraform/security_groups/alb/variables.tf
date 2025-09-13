@@ -2,12 +2,6 @@ variable "vpc_id" {
   type = string
 }
 
-variable "cluster_sg" {
-  type        = string
-  description = "Security Group ID of the cluster"
-}
-
-
 variable "private_subnets_cidr" {
   type = list(string)
   default = ["10.0.0.128/26", "10.0.0.192/26"]

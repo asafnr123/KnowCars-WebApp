@@ -9,7 +9,7 @@ resource "aws_security_group" "rds_sg" {
     from_port = 3306
     to_port = 3306
     protocol = "tcp"
-    security_groups  = var.flask_sg
+    security_groups  = [var.flask_sg]
   }
 
   tags = {
