@@ -5,6 +5,7 @@ resource "aws_eks_cluster" "this" {
 
   vpc_config {
     subnet_ids = var.private_subnets_ids
+    security_group_ids = var.cluster_sg_id
   }
 
   tags = {

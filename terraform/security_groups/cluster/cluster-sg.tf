@@ -1,5 +1,6 @@
 resource "aws_security_group" "eks_cluster_sg" {
-  name   = "eks-cluster-sg"
+  name   = "knowcars-cluster-sg"
+  description = "Allow allows traffic from worker nodes and fargate"
   vpc_id = var.vpc_id
 
   # Allow worker nodes to talk to the cluster API
@@ -26,6 +27,10 @@ resource "aws_security_group" "eks_cluster_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  tags = {
+    Name = "knowcars-cluster-sg"
   }
 }
 

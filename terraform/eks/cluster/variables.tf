@@ -22,6 +22,11 @@ variable "public_subnets_ids" {
   default     = ["subnet-093c712b6f6821a0d", "subnet-051da911561221ccc"]
 }
 
+variable "cluster_sg_id" {
+  type = string
+  default = "sg-02441c287d26e655a"
+}
+
 variable "private_subnets_ids" {
   description = "List of private subnet IDs"
   type        = list(string)
