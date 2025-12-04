@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql-statefulset
-  namespace: develop
+  namespace: knowcars
   labels:
     app: mysql
 spec:

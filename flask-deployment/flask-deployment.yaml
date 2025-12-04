@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flask-deployment
-  namespace: develop
+  namespace: knowcars
   labels:
     app: flask-api
 spec:
