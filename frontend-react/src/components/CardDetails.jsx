@@ -1,10 +1,13 @@
 
 export default function CarDetails({ car }) {
+
+  const base_img_url = "http://192.168.49.2:30080";
+  
   
   return (
     <div className="car-detail-container">
       <div className="car-image">
-        <img src={car.image_url} alt={`${car.make} ${car.model}`} />
+        <img src={`${base_img_url}${car.image_url}`} alt={`${car.make} ${car.model}`} />
       </div>
       <div className="car-info">
         <h2>{car.make} {car.model}</h2>

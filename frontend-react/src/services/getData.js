@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 
 export function useCarsWithImages() {
     
-    let url = `${window.location.origin}/api/cars_with_images`
+   
+       let url = "http://192.168.49.2:30080/api/cars_with_images"
+    // let url = `${window.location.origin}/api/cars_with_images`
     const [cars_with_images, set_cars_with_images] = useState([]);
 
 
@@ -22,6 +24,7 @@ export function useCarsWithImages() {
         
     },[]);
 
+    
     return cars_with_images;
 
     

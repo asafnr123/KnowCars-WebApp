@@ -298,7 +298,7 @@ def get_all_car_with_images():
 
 
 
-#actually routing the image:
+#routing the served images for local use:
 @carApi.route('/api/images/<filename>', methods=['GET'])
 def serve_image(filename):
     
@@ -325,7 +325,7 @@ def health_check():
     return jsonify({"message": "Ready"}), 200
 
 
-#test function to get some headers:
+#get some headers:
 @carApi.route('/api/headers', methods=['GET'])
 def get_headers():
     headers = {
