@@ -188,7 +188,7 @@ WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='223e4567-e89b-12d3-a456-
 
 
 INSERT INTO carImages (car_id, image_url)
-SELECT * FROM (SELECT 'e14e2276-1055-4a93-a686-df4b4bf19d2b' AS car_id, '/api/images/toyota-supra-2010.jpg' AS image_url) AS tmp
+SELECT * FROM (SELECT 'e14e2276-1055-4a93-a686-df4b4bf19d2b' AS car_id, '/api/images/toyota-supra-1998.jpg' AS image_url) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='e14e2276-1055-4a93-a686-df4b4bf19d2b' AND image_url='/api/images/toyota-supra-1998.jpg');
 
 
