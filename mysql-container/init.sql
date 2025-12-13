@@ -1,5 +1,6 @@
 CREATE DATABASE IF NOT EXISTS knowCarsDB;
 
+
 GRANT ALL PRIVILEGES ON knowCarsDB.* TO 'regular'@'%';
 
 USE knowCarsDB;
@@ -25,6 +26,8 @@ CREATE TABLE IF NOT EXISTS carImages (
 );
 
 -- initial values if the value is not already in the db
+
+-- Toyota Corolla (2021)
 INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, horse_power, gear, description)
 SELECT * FROM (SELECT
     '123e4568-e89b-12d3-a456-426614174000' AS id,
@@ -40,6 +43,7 @@ SELECT * FROM (SELECT
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='123e4568-e89b-12d3-a456-426614174000');
 
+-- Toyota Supra (1998)
 INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, horse_power, gear, description)
 SELECT * FROM (SELECT
     'e14e2276-1055-4a93-a686-df4b4bf19d2b' AS id,
@@ -55,6 +59,7 @@ SELECT * FROM (SELECT
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='e14e2276-1055-4a93-a686-df4b4bf19d2b');
 
+-- Honda Civic (2022)
 INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, horse_power, gear, description)
 SELECT * FROM (SELECT
     '223e4567-e89b-12d3-a456-426614174000' AS id,
@@ -70,6 +75,8 @@ SELECT * FROM (SELECT
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='223e4567-e89b-12d3-a456-426614174000');
 
+
+-- Ford Focus (2020)
 INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, horse_power, gear, description)
 SELECT * FROM (SELECT
     '323e4567-e89b-12d3-a456-426614174000' AS id,
@@ -85,6 +92,87 @@ SELECT * FROM (SELECT
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='323e4567-e89b-12d3-a456-426614174000');
 
+
+-- Nissan Skyline R34 (2002)
+INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, horse_power, gear, description)
+SELECT * FROM (SELECT
+    '3e9ed297-0721-4866-9961-8fadf3898b84' AS id,
+    'Nissan' AS make,
+    'Skyline R34' AS model,
+    2002 AS year,
+    'Gas' AS fuel_type,
+    6 AS cylinders,
+    2600 AS displacement,
+    276 AS horse_power,
+    'Manual' AS gear,
+    'The 2002 Nissan Skyline R34 is a legendary Japanese performance car, powered by the iconic RB26 engine. Known for its precise handling, aggressive styling, and motorsport heritage, the R34 is a benchmark in the JDM world and a symbol of pure driving engagement.' AS description
+) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='3e9ed297-0721-4866-9961-8fadf3898b84');
+
+-- Dodge Challenger (1970)
+INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, horse_power, gear, description)
+SELECT * FROM (SELECT
+    '00c6fb3a-5275-41fa-9e7b-fb71b9b04441' AS id,
+    'Dodge' AS make,
+    'Challenger' AS model,
+    1970 AS year,
+    'Gas' AS fuel_type,
+    8 AS cylinders,
+    7000 AS displacement,
+    425 AS horse_power,
+    'Manual' AS gear,
+    'The 1970 Dodge Challenger is a classic American muscle car, famous for its bold design and big V8 power. Built for straight-line performance, it represents the golden era of muscle cars with raw torque, aggressive styling, and unmistakable road presence.' AS description
+) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='00c6fb3a-5275-41fa-9e7b-fb71b9b04441');
+
+-- Ford Mustang (2020)
+INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, horse_power, gear, description)
+SELECT * FROM (SELECT
+    '84de8278-3ea9-4de5-bb00-94118a74e44f' AS id,
+    'Ford' AS make,
+    'Mustang' AS model,
+    2020 AS year,
+    'Gas' AS fuel_type,
+    8 AS cylinders,
+    5000 AS displacement,
+    460 AS horse_power,
+    'Manual' AS gear,
+    'The 2020 Ford Mustang delivers modern muscle performance with classic styling. Featuring advanced technology, a powerful V8 engine, and sharp handling, it blends everyday usability with track-ready capability.' AS description
+) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='84de8278-3ea9-4de5-bb00-94118a74e44f');
+
+-- BMW E30 (1982)
+INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, horse_power, gear, description)
+SELECT * FROM (SELECT
+    'd68107eb-03bc-4817-a89a-dc6841828034' AS id,
+    'BMW' AS make,
+    'E30' AS model,
+    1982 AS year,
+    'Gas' AS fuel_type,
+    4 AS cylinders,
+    1800 AS displacement,
+    113 AS horse_power,
+    'Manual' AS gear,
+    'The 1982 BMW E30 is a lightweight, driver-focused sports sedan that helped define BMW’s reputation for balanced handling and precise steering. Simple, mechanical, and engaging, it remains a favorite among enthusiasts and collectors.' AS description
+) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='d68107eb-03bc-4817-a89a-dc6841828034');
+
+-- Chevrolet Corvette (2019)
+INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, horse_power, gear, description)
+SELECT * FROM (SELECT
+    '6c9aeb6f-d0aa-4f61-96a2-7e5384327243' AS id,
+    'Chevrolet' AS make,
+    'Corvette' AS model,
+    2019 AS year,
+    'Gas' AS fuel_type,
+    8 AS cylinders,
+    6200 AS displacement,
+    455 AS horse_power,
+    'Automatic' AS gear,
+    'The 2019 Chevrolet Corvette is a high-performance American sports car offering supercar-level acceleration at a relatively accessible price. With a powerful V8, sharp chassis, and refined interior, it excels both on the street and the track.' AS description
+) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='6c9aeb6f-d0aa-4f61-96a2-7e5384327243');
+
 -- Small sleep to avoid FK conflicts (development only)
 SELECT SLEEP(0.5);
 
@@ -93,15 +181,41 @@ INSERT INTO carImages (car_id, image_url)
 SELECT * FROM (SELECT '123e4568-e89b-12d3-a456-426614174000' AS car_id, '/api/images/toyota-corolla-2021.jpg' AS image_url) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='123e4568-e89b-12d3-a456-426614174000' AND image_url='/api/images/toyota-corolla-2021.jpg');
 
+
 INSERT INTO carImages (car_id, image_url)
 SELECT * FROM (SELECT '223e4567-e89b-12d3-a456-426614174000' AS car_id, '/api/images/honda-civic-2022.jpg' AS image_url) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='223e4567-e89b-12d3-a456-426614174000' AND image_url='/api/images/honda-civic-2022.jpg');
+
 
 INSERT INTO carImages (car_id, image_url)
 SELECT * FROM (SELECT 'e14e2276-1055-4a93-a686-df4b4bf19d2b' AS car_id, '/api/images/toyota-supra-2010.jpg' AS image_url) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='e14e2276-1055-4a93-a686-df4b4bf19d2b' AND image_url='/api/images/toyota-supra-2010.jpg');
 
+
 INSERT INTO carImages (car_id, image_url)
 SELECT * FROM (SELECT '323e4567-e89b-12d3-a456-426614174000' AS car_id, '/api/images/ford-focus-2020.jpg' AS image_url) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='323e4567-e89b-12d3-a456-426614174000' AND image_url='/api/images/ford-focus-2020.jpg');
 
+
+INSERT INTO carImages (car_id, image_url)
+SELECT * FROM (SELECT '3e9ed297-0721-4866-9961-8fadf3898b84' AS car_id, '/api/images/nissan-skyline-r34-2002.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='3e9ed297-0721-4866-9961-8fadf3898b84' AND image_url='/api/images/nissan-skyline-r34-2002.jpg');
+
+
+INSERT INTO carImages (car_id, image_url)
+SELECT * FROM (SELECT '00c6fb3a-5275-41fa-9e7b-fb71b9b04441' AS car_id, '/api/images/dodge-challenger-1970.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='00c6fb3a-5275-41fa-9e7b-fb71b9b04441' AND image_url='/api/images/dodge-challenger-1970.jpg');
+
+
+INSERT INTO carImages (car_id, image_url)
+SELECT * FROM (SELECT '84de8278-3ea9-4de5-bb00-94118a74e44f' AS car_id, '/api/images/ford-mustang-2020.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='84de8278-3ea9-4de5-bb00-94118a74e44f' AND image_url='/api/images/ford-mustang-2020.jpg');
+
+INSERT INTO carImages (car_id, image_url)
+SELECT * FROM (SELECT 'd68107eb-03bc-4817-a89a-dc6841828034' AS car_id, '/api/images/bmw-e30-1982.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='d68107eb-03bc-4817-a89a-dc6841828034' AND image_url='/api/images/bmw-e30-1982.jpg');
+
+
+INSERT INTO carImages (car_id, image_url)
+SELECT * FROM (SELECT '6c9aeb6f-d0aa-4f61-96a2-7e5384327243' AS car_id, '/api/images/chevrolet-corvette-2019.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='6c9aeb6f-d0aa-4f61-96a2-7e5384327243' AND image_url='/api/images/chevrolet-corvette-2019.jpg');
