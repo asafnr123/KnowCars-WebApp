@@ -19,18 +19,34 @@ def Home_Page():
 # getting all cars
 @carApi.route("/api/cars", methods=['GET'])
 def get_all_cars():
+
+    include = request.args.get("include")
+
     try:
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM cars")
+
+        if include == "image":
+            cursor.execute("""
+                SELECT cars.*, carImages.image_url
+                FROM cars
+                LEFT JOIN carImages ON cars.id = carImages.car_id
+            """)
+        else:
+            cursor.execute("SELECT * FROM cars")
+
+
         all_cars = cursor.fetchall()
         cursor.close()
         connection.close()
+
+        return jsonify(all_cars), 200
+        
     except Exception as e:
         return jsonify({"error": f"Database error: {e}"}), 500
     
     
-    return jsonify(all_cars), 200
+    
 
 
 
@@ -137,7 +153,7 @@ def create_car():
 
 
 #update a car
-@carApi.route("/api/cars/<car_id>", methods=['PUT'])
+@carApi.route("/api/cars/<car_id>", methods=['PATCH'])
 def update_car(car_id):
     updated_car = request.get_json(silent=True)
     required_fields = ['make', 'model', 'year', 'horse_power', 'fuel_type', 'cylinders', 'displacement', 'gear', 'description']
