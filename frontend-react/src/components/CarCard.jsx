@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 export default function CarCard({ car }) {
 
-    const base_img_url = "http://192.168.58.2:30080";
+    const base_img_url = "http://192.168.49.2:30080";
 
     return (
 
