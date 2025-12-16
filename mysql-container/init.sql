@@ -98,14 +98,14 @@ INSERT INTO cars (id, make, model, year, fuel_type, cylinders, displacement, hor
 SELECT * FROM (SELECT
     '3e9ed297-0721-4866-9961-8fadf3898b84' AS id,
     'Nissan' AS make,
-    'Skyline R34' AS model,
+    'Skyline GTR' AS model,
     2002 AS year,
     'Gas' AS fuel_type,
     6 AS cylinders,
     2600 AS displacement,
     276 AS horse_power,
     'Manual' AS gear,
-    'The 2002 Nissan Skyline R34 is a legendary Japanese performance car, powered by the iconic RB26 engine. Known for its precise handling, aggressive styling, and motorsport heritage, the R34 is a benchmark in the JDM world and a symbol of pure driving engagement.' AS description
+    'The 2002 Nissan Skyline GTR R34 is a legendary Japanese performance car, powered by the iconic RB26 engine. Known for its precise handling, aggressive styling, and motorsport heritage, the R34 is a benchmark in the JDM world and a symbol of pure driving engagement.' AS description
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='3e9ed297-0721-4866-9961-8fadf3898b84');
 
@@ -173,8 +173,6 @@ SELECT * FROM (SELECT
 ) AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM cars WHERE id='6c9aeb6f-d0aa-4f61-96a2-7e5384327243');
 
--- Small sleep to avoid FK conflicts (development only)
-SELECT SLEEP(0.5);
 
 -- Seed default carImages data safely
 INSERT INTO carImages (car_id, image_url)
@@ -198,8 +196,8 @@ WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='323e4567-e89b-12d3-a456-
 
 
 INSERT INTO carImages (car_id, image_url)
-SELECT * FROM (SELECT '3e9ed297-0721-4866-9961-8fadf3898b84' AS car_id, '/api/images/nissan-skyline-r34-2002.jpg' AS image_url) AS tmp
-WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='3e9ed297-0721-4866-9961-8fadf3898b84' AND image_url='/api/images/nissan-skyline-r34-2002.jpg');
+SELECT * FROM (SELECT '3e9ed297-0721-4866-9961-8fadf3898b84' AS car_id, '/api/images/nissan-skyline-gtr-2002.jpg' AS image_url) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM carImages WHERE car_id='3e9ed297-0721-4866-9961-8fadf3898b84' AND image_url='/api/images/nissan-skyline-gtr-2002.jpg');
 
 
 INSERT INTO carImages (car_id, image_url)

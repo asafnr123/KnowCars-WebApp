@@ -38,7 +38,7 @@ spec:
     
       containers:
         - name: flask
-          image: asafnr567/flask-api:2.2
+          image: asafnr567/flask-api:2.3
           imagePullPolicy: Always
           ports:
             - containerPort: 5000

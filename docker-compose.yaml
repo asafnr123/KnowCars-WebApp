@@ -3,7 +3,7 @@ version: '3.9'
 
 services:
   mysql:
-    image: asafnr567/mysql-db:3.2
+    image: asafnr567/mysql-db:3.3
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}

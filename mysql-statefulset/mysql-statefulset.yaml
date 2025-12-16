@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: asafnr567/mysql-db:3.2
+          image: asafnr567/mysql-db:3.3
           imagePullPolicy: Always
           ports:
             - containerPort: 3306
