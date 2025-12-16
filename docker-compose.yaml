@@ -3,7 +3,8 @@ version: '3.9'
 
 services:
   mysql:
-    image: asafnr567/mysql-db:3.3
+    build:
+      context: ./mysql-container
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
@@ -19,7 +20,8 @@ services:
       
       
   api:
-    image: asafnr567/flask-api:2.3-dev
+    build:
+      context: ./backend-API-container
     environment:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
