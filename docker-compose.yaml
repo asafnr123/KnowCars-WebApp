@@ -19,7 +19,7 @@ services:
       
       
   api:
-    image: asafnr567/flask-api:2.2
+    image: asafnr567/flask-api:2.3
     environment:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
@@ -30,12 +30,15 @@ services:
       mysql:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 3
     networks:
       - knowcars
+    ports:
+      - "5000:5000"
+
       
       
 networks:
