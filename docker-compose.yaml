@@ -19,7 +19,7 @@ services:
       
       
   api:
-    image: asafnr567/flask-api:2.3
+    image: asafnr567/flask-api:2.3-dev
     environment:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}

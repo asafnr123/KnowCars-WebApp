@@ -16,7 +16,7 @@ def Home_Page():
 
 
 
-# getting all cars
+# getting all cars or cars with image_url
 @carApi.route("/api/cars", methods=['GET'])
 def get_all_cars():
 
@@ -291,29 +291,6 @@ def get_car_image_url(car_id):
 
 
 
-
-#Get all cars with image url (join tables)
-@carApi.route('/api/cars_with_images', methods=['GET'])
-def get_all_car_with_images():
-    
-    try:
-        connection = get_connection()
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute("""
-                       SELECT cars.*, carImages.image_url FROM cars
-                       LEFT JOIN carImages ON cars.id = carImages.car_id 
-                       """)
-        cars_with_images = cursor.fetchall()
-        cursor.close()
-        connection.close()
-    except Exception as e:
-        return jsonify({"error": f"Database error: {e}"}), 500
-    
-    return jsonify(cars_with_images)
-
-
-
-
 #routing the served images for local use:
 @carApi.route('/api/images/<filename>', methods=['GET'])
 def serve_image(filename):
@@ -338,7 +315,18 @@ def serve_image(filename):
 #route to check the status of the api
 @carApi.route('/api/health', methods=['GET'])
 def health_check():
-    return jsonify({"message": "Ready"}), 200
+    try:
+        connection = get_connection()
+        connection.close()
+        return jsonify({"message": "Successfully connected to Datebase"}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to connect to Database: {e}"}), 500
+
+        
+
+
+
 
 
 #get some headers:
