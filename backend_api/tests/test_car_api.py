@@ -1,6 +1,6 @@
 import pytest
 from flask import Flask
-from ../carApi import carApi # maybe wont work
+from backend_api.carAPI import carApi # if not working, add a __init__.py to backend_api
 
 
 
@@ -21,7 +21,7 @@ def mock_db(mocker):
     mock_connection = mocker.Mock()
     mock_connection.cursor.return_value = mock_cursor
 
-    mocker.patch("carAPI.get_connection", return_value=mock_connection)
+    mocker.patch("carApi.get_connection", return_value=mock_connection)
 
     return mock_cursor, mock_connection
 
