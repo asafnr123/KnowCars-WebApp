@@ -1,7 +1,7 @@
 .env
-backend-API-container/venv
+venv/
 terraform/*/.terraform/
 terraform/*/terraform.tfstate
 terraform/*/terraform.tfstate.backup
 terraform/*/*.tfvars
-secrets
+secrets/

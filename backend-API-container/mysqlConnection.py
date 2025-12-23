@@ -3,8 +3,9 @@ import time
 import threading
 from mysql.connector import pooling, Error
 
-pool = None
+pool = None # when DB is not initalize yet
 pool_lock = threading.RLock()
+
 
 def init_pool():
     global pool
@@ -29,6 +30,7 @@ def init_pool():
                     database=os.environ["CARS_DB"],
                 )
 
+                # raise an exception if fails to make a connection
                 conn = poolCheck.get_connection()
                 conn.close()
 
