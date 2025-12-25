@@ -58,7 +58,7 @@ def test_get_all_cars(client, mock_db):
     mock_cursor, mock_connection = mock_db
 
     expected_value = [
-        {"id": 1, "make": "Toyota", "model": "Corolla", "year": 2021, "horse_power": 130, "fuel_type": "Gas", "cylinders": 4, "displacement": 1800," gear": "Automatic", "description": "Good car"},
+        {"id": 1, "make": "Toyota", "model": "Corolla", "year": 2021, "horse_power": 130, "fuel_type": "Gas", "cylinders": 4, "displacement": 1800,"gear": "Automatic", "description": "Good car"},
         
         {"id": 2, "make": "Honda", "model": "Civic", "year": 2022, "horse_power": 158, "fuel_type": "Gas", "cylinders": 4, "displacement": 2000, "gear": "Automatic", "description": "Good car"}
     ]
@@ -70,7 +70,32 @@ def test_get_all_cars(client, mock_db):
 
     assert response.status_code == 200
     assert isinstance(data, list)
-    assert data[1]["make"] == "Honda"
     assert data == expected_value
+    mock_cursor.execute.assert_called_once_with("SELECT * FROM cars")
+
+
+def test_get_all_cars_empty_list(client, mock_db):
+
+    mock_cursor, mock_connection = mock_db
+    mock_cursor.fetchall.return_value = []
+
+    response = client.get("/api/cars")
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert isinstance(data, list)
+    assert len(data) == 0
+
+
+def test_get_all_cars_db_error(client, mock_db):
+    mock_cursor, mock_connection = mock_db
+    mock_cursor.execute.side_effect = Exception("Connection failed")
+
+    response = client.get("/api/cars")
+    data = response.get_json()
+
+    assert response.status_code == 500
+    assert "error" in data
+    assert "Database error" in data["error"]
 
 
