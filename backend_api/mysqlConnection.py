@@ -23,7 +23,7 @@ def init_pool():
             try:
                 poolCheck = pooling.MySQLConnectionPool(
                     pool_name="cars_pool",
-                    pool_size=5,
+                    pool_size=10,
                     host=os.environ["DB_HOST"],
                     user=os.environ["MYSQL_USER"],
                     password=os.environ["MYSQL_PASSWORD"],

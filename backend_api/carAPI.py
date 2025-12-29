@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import uuid
-from .car import Car
-from .mysqlConnection import get_connection
+from car import Car
+from mysqlConnection import get_connection
 
 
 carApi = Flask(__name__)
@@ -40,6 +40,12 @@ def get_all_cars():
         cursor.close()
         connection.close()
 
+        if include == "image":
+            if all("image_url" in car for car in all_cars):
+                return jsonify(all_cars), 200
+            else:
+                return jsonify({"error": "Cars doesn't have an image_url"}), 500
+                
         return jsonify(all_cars), 200
         
     except Exception as e:
@@ -313,16 +319,23 @@ def serve_image(filename):
 
 
 #route to check the status of the api
-@carApi.route('/api/health', methods=['GET'])
+@carApi.route('/api/health/ready', methods=['GET'])
 def health_check():
     try:
         connection = get_connection()
+        cursor = connection.cursor(buffered=True)
+        cursor.execute("SELECT 1")
+        cursor.close()
         connection.close()
-        return jsonify({"message": "Successfully connected to Datebase"}), 200
+        return jsonify({"message": "Successfully connected to Database"}), 200
 
     except Exception as e:
         return jsonify({"error": f"Failed to connect to Database: {e}"}), 500
 
+
+@carApi.route('/api/health', methods=['GET'])
+def ready_check():
+    return jsonify({"message": "Ok"}), 200
         
 
 

@@ -4,13 +4,13 @@ version: '3.9'
 services:
   mysql:
     build:
-      context: ./mysql-container
+      context: ./mysql_container
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$MYSQL_USER -p$MYSQL_PASSWORD"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -21,7 +21,7 @@ services:
       
   api:
     build:
-      context: ./backend-API-container
+      context: ./backend_api
     environment:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
@@ -32,10 +32,12 @@ services:
       mysql:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
     networks:
       - knowcars
     ports:
