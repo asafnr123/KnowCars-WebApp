@@ -43,6 +43,7 @@
   },
   "proxy": "http://localhost:5000",
   "devDependencies": {
+    "@babel/eslint-parser": "^7.28.5",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
