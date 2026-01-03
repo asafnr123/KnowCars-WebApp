@@ -5,7 +5,7 @@ import CarCard from "../components/CarCard";
 
 export default function CarsPage() {
 
-    const cars = useCarsWithImages();
+    const [cars, baseUrl] = useCarsWithImages();
 
 //     let locaTestinglDB = [
 //     {
@@ -69,7 +69,7 @@ export default function CarsPage() {
         {
             cars.map((c, index) => {
                 return (
-                    <CarCard key={index} className='car-item' car={c} />
+                    <CarCard key={index} className='car-item' car={c} url={baseUrl} />
                 )
             })
         }

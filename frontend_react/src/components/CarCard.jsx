@@ -4,9 +4,9 @@ import { Link } from "react-router-dom";
 
 
 
-export default function CarCard({ car }) {
+export default function CarCard({ car, url }) {
 
-    const base_img_url = "http://192.168.49.2:30080";
+    const base_img_url = url;
 
     return (
 

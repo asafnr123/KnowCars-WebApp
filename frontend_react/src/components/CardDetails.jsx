@@ -1,7 +1,7 @@
 
-export default function CarDetails({ car }) {
+export default function CarDetails({ car, url }) {
 
-  const base_img_url = "http://192.168.49.2:30080";
+  const base_img_url = url;
   
   
   return (

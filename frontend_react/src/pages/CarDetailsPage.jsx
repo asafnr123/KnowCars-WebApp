@@ -6,7 +6,7 @@ import NotFoundPage from "./NotFoundPage";
 
 function CarDetailsPage() {
   const { car_id } = useParams();
-  const cars = useCarsWithImages();
+  const [cars, baseUrl] = useCarsWithImages();
   const [selectedCar, setSelectedCar] = useState(null)
   const [dataLoaded, setDataLoaded] = useState(false)
 
@@ -21,9 +21,9 @@ function CarDetailsPage() {
 
   if (!dataLoaded) {
     return (
-       <div class="d-flex justify-content-center align-items-center vh-100">
-            <div class="spinner-border" role="status" style={{width: '75px', height: '75px'}}>
-                <span class="sr-only"></span>
+       <div className="d-flex justify-content-center align-items-center vh-100">
+            <div className="spinner-border" role="status" style={{width: '75px', height: '75px'}}>
+                <span className="sr-only"></span>
             </div>
         </div>
     )
@@ -34,7 +34,7 @@ function CarDetailsPage() {
   )
 
 
-  return <CarDetails car={selectedCar}/>
+  return <CarDetails car={selectedCar} url={baseUrl}/>
 
 }
 

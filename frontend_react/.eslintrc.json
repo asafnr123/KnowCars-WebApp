@@ -26,15 +26,24 @@
         "react/react-in-jsx-scope": "off",
         "react-hooks/exhaustive-deps": "error",
         "no-unused-vars": ["error", {"argsIgnorePattern": "^_"}],
-        "no-console": "warn",
+        "no-console": ["warn", {"allow": ["warn", "error"]}],
+        "react/prop-types": "off",
         "eqeqeq": "error",
         "import/no-unresolved": "error",
         "import/order": "error"
     },
 
     "settings": {
+        "import/resolver": {
+            "node": {
+                "extensions": [".js", ".jsx"]
+            }
+        },
+
         "react": {
             "version": "detect"
         }
     }
+        
+    
 }
