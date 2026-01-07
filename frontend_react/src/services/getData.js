@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 
 //const url = "http://192.168.49.2:30080/api/cars?include=image" //for cluster
+//const base_url = "http://192.168.49.2:30080"
 
 const url = "http://localhost:5000/api/cars?include=image" //for docker environment 
+const base_url = "http://localhost:5000"
 
 
 export function useCarsWithImages() {
@@ -26,7 +28,7 @@ export function useCarsWithImages() {
     },[]);
 
     
-    return [cars_with_images, url];
+    return [cars_with_images, base_url];
 
     
 }
