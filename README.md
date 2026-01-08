@@ -80,7 +80,7 @@ The Flask API exposes multiple endpoints to interact with the cars database.
 
 ### Health
 - **GET** `/api/health` → Check if the API is running.
-- - **GET** `/api/health/ready` → Check for API and Database connection.
+- **GET** `/api/health/ready` → Check for API and Database connection.
 
 ### Cars
 - **GET** `/api/cars` → Get all cars.  
