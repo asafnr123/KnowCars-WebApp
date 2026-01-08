@@ -15,8 +15,11 @@ export default function AboutPage() {
                 access to detailed car specifications — all in one place. Explore thousands of vehicles with complete info including:
                 gear type, transmission, displacement, horse power any many more
                 our goal is simple, To help you know cars better, compare models easily, and make smarter decisions — whether you're
-                shopping, researching, or just exploring your passion.
+                shopping, researching, or just exploring your passion. <br/>
+                *Note: this is an experimental project and its for learning experience only
                 </p>
+
+                
             </div>
         </section>
     )
