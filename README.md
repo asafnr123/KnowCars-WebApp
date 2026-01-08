@@ -32,7 +32,6 @@ It consists of a **React frontend** served by **Nginx**, a **Flask API backend**
 - **Frontend:** React
 - **Backend:** Flask (Python)
 - **Database:** MySQL
-- **Web Server:** Nginx
 - **Containerization:** Docker & Docker Compose
 
 ---
@@ -55,8 +54,6 @@ kubectl apply -f k8s/flask-configmap.yaml
 kubectl apply -f k8s/flask-deployment.yaml
 kubectl apply -f k8s/flask-service.yaml
 
-kubectl apply -f k8s/nginx-deployment.yaml
-kubectl apply -f k8s/nginx-service.yaml
 ```
 
 ---
@@ -75,10 +72,6 @@ kubectl apply -f k8s/nginx-service.yaml
 - **ClusterIP Service** → Exposes the API internally to Nginx.  
 - **ConfigMap** → Stores database connection settings.  
 
-### Nginx (React Frontend)
-- **Deployment** → Serves React build and proxies API requests.  
-- **NodePort Service** → Exposes the frontend externally for access in the browser.  
-
 ---
 
 ## API-Endpoints
@@ -87,6 +80,7 @@ The Flask API exposes multiple endpoints to interact with the cars database.
 
 ### Health
 - **GET** `/api/health` → Check if the API is running.
+- - **GET** `/api/health/ready` → Check for API and Database connection.
 
 ### Cars
 - **GET** `/api/cars` → Get all cars.  
