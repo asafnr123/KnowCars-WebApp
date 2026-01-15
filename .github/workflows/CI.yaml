@@ -1,17 +1,8 @@
-<<<<<<< HEAD
-name: CI
-=======
 name: knowCars CI
->>>>>>> develop
 
 on:
   push:
     branches: ["develop"]
-<<<<<<< HEAD
-
-jobs:
-  build-docker:
-=======
   workflow_dispatch:
     inputs:
       environment:
@@ -20,124 +11,10 @@ jobs:
 
 jobs:
   test-and-build:
->>>>>>> develop
     runs-on: ubuntu-latest
     steps:
       # 1. checkout repository
       - name: Checkout repository
-<<<<<<< HEAD
-        uses: actions/checkout@v3
-
-      # 2. create docker network for DNS support 
-      - name: Creating docker network
-        run: docker network create git-network
-
-
-      # 3. starting mysql
-      - name: Start mysql container
-        run: |
-          docker run -d \
-          --name mysql-service \
-          --network git-network \
-          -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-          -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
-          -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-          asafnr567/mysql-db:3.0
-
-      # 4. waiting mysql
-      - name: Waiting mysql
-        run: |
-          MAX_RETRIES=10 
-          COUNT=0
-              
-          until docker exec mysql-service mysqladmin ping -uroot -p${{ secrets.MYSQL_ROOT_PASSWORD }} --silent; do
-            echo "Waiting for mysql..."
-            sleep 2
-            COUNT=$((COUNT + 1))
-            if [ $COUNT -eq $MAX_RETRIES ]; then
-              echo "Tried to connect to mysql $COUNT times, exiting..."
-              exit 1
-            fi
-          done
-          echo "mysql is ready"
-            
-
-      # 5. starting flask
-      - name: Starting flask container
-        run: |
-          docker run -d \
-          --name flask-service \
-          --network git-network \
-          -p 5000:5000 \
-          -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
-          -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-          -e DB_HOST=mysql-service \
-          -e DB_PORT=3306 \
-          -e CARS_DB=knowCarsDB \
-          asafnr567/flask-api:2.1
-
-
-      # 6. waiting for flask
-      - name: Waiting flask
-        run: |
-          COUNT=0
-          MAX=5
-
-          while [ $COUNT -lt $MAX ]; do
-            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/api/cars || echo "000")
-
-            if [ "$http_status" -eq 200 ]; then
-              echo "Flask is ready"
-              exit 0
-            fi
-
-            echo "Waiting for Flask..."
-            sleep 1
-            COUNT=$((COUNT + 1))
-          done
-
-          echo "Failed to run Flask after $COUNT attempts"
-          exit 1
-
-
-      # 7. starting nginx
-      - name: Starting nginx
-        run: |
-          docker run -d \
-          --name nginx-service \
-          --network git-network \
-          -p 80:80 \
-          asafnr567/nginx-srv:1.1
-
-      # 8. testing nginx
-      - name: Testing nginx
-        run: |
-          COUNT=0
-          MAX=5
-
-          while [ $COUNT -lt $MAX ]; do
-            http_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80/api/cars || echo "000")
-
-            if [ "$http_status" -eq 200 ]; then
-              echo "Nginx is ready"
-              break
-            fi
-
-            echo "Waiting for nginx..."
-            sleep 1
-            COUNT=$((COUNT + 1))
-          done
-
-          echo "Failed to run Nginx after $COUNT attempts"
-          exit 1
-
-
-      # 9. stopping the containers
-      - name: Stopping the containers
-        run: |
-          docker stop flask-service nginx-service mysql-service
-          docker rm flask-service nginx-service mysql-service
-=======
         uses: actions/checkout@v4
 
       # 2. Setup Python
@@ -165,20 +42,3 @@ jobs:
       # 6. start ESLint tests
       - name: run ESLint tests
         run: npm exec eslint ./frontend_react
-
-      
-
-        
-
-
-
-    
->>>>>>> develop
-          
-
-          
-          
-      
-        
-        
-      
