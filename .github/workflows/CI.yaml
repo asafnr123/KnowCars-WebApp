@@ -42,7 +42,8 @@ jobs:
 
       # 6. start ESLint tests
       - name: run ESLint tests
-        run: npm exec eslint ./frontend_react
+        working-directory: ./frontend_react
+        run: npm exec eslint .
 
       
 
