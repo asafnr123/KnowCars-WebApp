@@ -30,6 +30,7 @@ jobs:
         with:
           node-version: '18'  
           cache: 'npm'
+          cache-dependency-path: './frontend_react/package-lock.json'
 
       # 4. install dependencies 
       - name: install dependencies 
