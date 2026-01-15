@@ -1,7 +1,7 @@
 # KnowCars on Kubernetes 
 
 KnowCars is a web application that displays information about cars.  
-It consists of a **React frontend** served by **Nginx**, a **Flask API backend**, and a **MySQL database**, all orchestrated with **Kubernetes**.
+It consists of a **React frontend**, a **Flask API backend**, and a **MySQL database**, all orchestrated with **Kubernetes**.
 
 ---
 
@@ -69,7 +69,7 @@ kubectl apply -f k8s/flask-service.yaml
 
 ### Flask API
 - **Deployment** → Manages Flask API pods.  
-- **ClusterIP Service** → Exposes the API internally to Nginx.  
+- **ClusterIP Service** → Exposes the API internally.
 - **ConfigMap** → Stores database connection settings.  
 
 ---
@@ -80,7 +80,11 @@ The Flask API exposes multiple endpoints to interact with the cars database.
 
 ### Health
 - **GET** `/api/health` → Check if the API is running.
+<<<<<<< HEAD
 - - **GET** `/api/health/ready` → Check for API and Database connection.
+=======
+- **GET** `/api/health/ready` → Check for API and Database connection.
+>>>>>>> develop
 
 ### Cars
 - **GET** `/api/cars` → Get all cars.  

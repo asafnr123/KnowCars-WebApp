@@ -1,15 +1,31 @@
+<<<<<<< HEAD
 name: CI
+=======
+name: knowCars CI
+>>>>>>> develop
 
 on:
   push:
     branches: ["develop"]
+<<<<<<< HEAD
 
 jobs:
   build-docker:
+=======
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+
+jobs:
+  test-and-build:
+>>>>>>> develop
     runs-on: ubuntu-latest
     steps:
       # 1. checkout repository
       - name: Checkout repository
+<<<<<<< HEAD
         uses: actions/checkout@v3
 
       # 2. create docker network for DNS support 
@@ -121,6 +137,43 @@ jobs:
         run: |
           docker stop flask-service nginx-service mysql-service
           docker rm flask-service nginx-service mysql-service
+=======
+        uses: actions/checkout@v4
+
+      # 2. Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+       # 3. Setup Node.js (add this!)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'  
+          cache: 'npm
+
+      # 4. install dependencies 
+      - name: install dependencies 
+        run: pip install -r requirements-test.txt && npm ci
+
+      # 5. start unit tests
+      - name: run unit tests
+        run: pytest
+
+      # 6. start ESLint tests
+      - name: run ESLint tests
+        run: npm exec eslint ./frontend_react
+
+      
+
+        
+
+
+
+    
+>>>>>>> develop
           
 
           

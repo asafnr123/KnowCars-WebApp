@@ -1,0 +1,49 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+
+    "extends": [
+        "eslint:recommended",
+        "plugin:import/errors",
+        "plugin:import/warnings",
+        "react-app",
+        "react-app/jest"
+    ],
+
+    "plugins": ["import"],
+    "parserOptions": {
+    "requireConfigFile": false,
+    "ecmaVersion": 2021,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+        }
+    },
+
+    "rules": {
+        "react/react-in-jsx-scope": "off",
+        "react-hooks/exhaustive-deps": "error",
+        "no-unused-vars": ["error", {"argsIgnorePattern": "^_"}],
+        "no-console": ["warn", {"allow": ["warn", "error"]}],
+        "react/prop-types": "off",
+        "eqeqeq": "error",
+        "import/no-unresolved": "error",
+        "import/order": "error"
+    },
+
+    "settings": {
+        "import/resolver": {
+            "node": {
+                "extensions": [".js", ".jsx"]
+            }
+        },
+
+        "react": {
+            "version": "detect"
+        }
+    }
+        
+    
+}
