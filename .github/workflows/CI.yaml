@@ -33,7 +33,7 @@ jobs:
 
       # 4. install dependencies 
       - name: install dependencies 
-        run: pip install -r requirements-test.txt && npm ci
+        run: pip install -r requirements-test.txt && cd ./frontend_react && npm ci
 
       # 5. start unit tests
       - name: run unit tests
