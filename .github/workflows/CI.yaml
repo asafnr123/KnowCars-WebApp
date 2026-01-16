@@ -1,13 +1,10 @@
 name: knowCars CI
 
 on:
+  workflow_dispatch:
+  
   push:
     branches: ["develop"]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
 
 jobs:
   test-and-build:
@@ -44,6 +41,10 @@ jobs:
       - name: run ESLint tests
         working-directory: ./frontend_react
         run: npm exec eslint .
+
+      - name: Build React
+        working-directory: ./frontend_react
+        run: npm run build
 
       
 
