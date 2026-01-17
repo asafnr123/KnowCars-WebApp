@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-//const url = "http://192.168.49.2:30080/api/cars?include=image" //for cluster
+//const cars_with_images_url = "http://192.168.49.2:30080/api/cars?include=image" //for cluster
 //const base_url = "http://192.168.49.2:30080"
 
-const url = "http://localhost:5000/api/cars?include=image" //for docker environment 
+const cars_with_images_url = "http://localhost:5000/api/cars?include=image" //for docker environment 
 const base_url = "http://localhost:5000"
 
 
@@ -15,7 +15,7 @@ export function useCarsWithImages() {
         useEffect(() => {
             const fetchData = async () => {
                 try {
-                    const res = await fetch(url)
+                    const res = await fetch(cars_with_images_url)
                     const data = await res.json()
                     set_cars_with_images(data)
                 } catch (e) {
