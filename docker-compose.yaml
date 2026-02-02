@@ -1,10 +1,8 @@
 
 services:
   mysql:
-    # for local development
     build:
       context: ./mysql_container
-    image: ${MYSQL_IMAGE_NAME:-mysql-db:latest} # in CI
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
@@ -20,10 +18,8 @@ services:
       
       
   api:
-    # for local development
     build:
       context: ./backend_api
-    image: ${FLASK_IMAGE_NAME:-flask-api:latest} # in CI
     environment:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
