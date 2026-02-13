@@ -49,10 +49,6 @@ jobs:
       - name: run ESLint tests
         run: cd ./frontend_react && npm exec eslint .
 
-      # Build react app
-      - name: Build React
-        run: cd ./frontend_react && npm run build
-
       # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -115,19 +111,6 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:${SHORT_SHA}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:latest
 
-      - name: Upload React build
-        uses: actions/upload-artifact@v4
-        with:
-          name: react-build
-          path: ./frontend_react/build
-          retention-days: 7
-
-  # start-deployment:
-  #   needs: test-build-push
-  #   uses: ./.github/workflows/CD.yaml
-  #   with:
-  #     artifact_name: react-build
-  #   secrets: inherit
 
         
 
