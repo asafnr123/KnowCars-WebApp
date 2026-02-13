@@ -10,18 +10,18 @@ jobs:
   test-and-build:
     runs-on: ubuntu-latest
     steps:
-      # 1. checkout repository
+      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Setup Python
+      # Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
 
-       # 3. Setup Node.js (add this!)
+       # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -29,24 +29,92 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './frontend_react/package-lock.json'
 
-      # 4. install dependencies 
+      # Install dependencies 
       - name: install dependencies 
         run: pip install -r requirements-test.txt && cd ./frontend_react && npm ci
 
-      # 5. start unit tests
+      # Create .env file from secrets
+      - name: Create .env file
+        run: |
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+          echo "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}" >> .env
+
+      # Start unit tests
       - name: run unit tests
         run: pytest
 
-      # 6. start ESLint tests
+      # Start ESLint tests
       - name: run ESLint tests
-        working-directory: ./frontend_react
-        run: npm exec eslint .
+        run: cd ./frontend_react && npm exec eslint .
 
+      # Build react app
       - name: Build React
-        working-directory: ./frontend_react
-        run: npm run build
+        run: cd ./frontend_react && npm run build
 
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build and tag Docker images
+      - name: Build Docker images with Buildx
+        run: |
+          # Get short commit SHA for tagging
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          # Build Flask image
+          docker buildx build \
+            --load \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-flask:latest \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-flask:${SHORT_SHA} \
+            ./backend_api
+          
+          # Build MySQL image 
+          docker buildx build \
+            --load \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:latest \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:${SHORT_SHA} \
+            ./mysql_container
+
+      # Login to DockerHub
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Run docker compose for integration tests
+      - name: Start services with docker-compose
+        run: docker compose -f docker-compose-ci.yaml up -d
+
+      # Run integration tests
+      - name: Run integration tests
+        run: ./tests/docker_integration_test.sh
+
+      # Show logs if integration tests fail
+      - name: Show docker logs on failure
+        if: failure()
+        run: docker compose -f docker-compose-ci.yaml logs
       
+      # Stop docker compose services
+      - name: Stop docker-compose services
+        if: always()
+        run: docker compose -f docker-compose-ci.yaml down
+      
+      # Push Docker images to DockerHub
+      - name: Push images to DockerHub
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          # Push Flask image
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-flask:${SHORT_SHA}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-flask:latest
+          
+          # Push MySQL image
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:${SHORT_SHA}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:latest
+
 
         
 
