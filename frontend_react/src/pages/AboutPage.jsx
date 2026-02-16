@@ -2,6 +2,7 @@ import React from "react";
 import '../styles/style.css'
 
 
+awd wa
 export default function AboutPage() {
     return (
         <section className="background-about">
