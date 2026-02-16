@@ -1,7 +1,6 @@
 import React from "react";
 import '../styles/style.css'
 
-const x = 
 awd wa
 export default function AboutPage() {
     return (
