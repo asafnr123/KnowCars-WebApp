@@ -47,7 +47,7 @@ jobs:
 
       # Start ESLint tests
       - name: run ESLint tests
-        run: cd ./frontend_react && npm exec eslint .
+        run: cd ./frontend_react && npm exec eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0 
 
       # Set up Docker Buildx
       - name: Set up Docker Buildx
