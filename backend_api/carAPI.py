@@ -15,8 +15,6 @@ def Home_Page():
 
 
 
-dwad
-x = 
 # getting all cars or cars with image_url
 @carApi.route("/api/cars", methods=['GET'])
 def get_all_cars():
