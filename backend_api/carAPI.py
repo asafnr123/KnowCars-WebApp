@@ -13,8 +13,6 @@ CORS(carApi)
 def Home_Page():
     return "<h1>This is a cars API using flask</h1>"
 
-
-
 # getting all cars or cars with image_url
 @carApi.route("/api/cars", methods=['GET'])
 def get_all_cars():
