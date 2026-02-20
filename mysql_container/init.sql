@@ -18,6 +18,13 @@ CREATE TABLE IF NOT EXISTS cars (
 	description TEXT
 );
 
+CREATE TABLE IF NOT EXISTS carImages (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	car_id CHAR(36),
+	image_url VARCHAR(500),
+	FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
+);
+
 -- initial values if the value is not already in the db
 
 -- Toyota Corolla (2021)
