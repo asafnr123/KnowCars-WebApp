@@ -77,8 +77,6 @@ def get_Car(car_id):
         return jsonify({"error": f"Couldn't find car with ID {car_id}"}), 404
 
 
-    
-
 
 #create a car
 @carApi.route("/api/cars", methods=['POST'])
