@@ -2,9 +2,9 @@ name: knowCars CI
 
 on:
   workflow_dispatch:
-  
+ 
   pull_request:
-    branches: ["master"]  
+    branches: ["develop"]
 
 jobs:
   test-build-push:
@@ -111,6 +111,16 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:${SHORT_SHA}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:latest
 
+      # Push Short_SHA as artifact so CD.yaml use the same Docker image
+      - name: Save SHORT_SHA as artifact
+        run: echo "${{ steps.sha.outputs.SHORT_SHA }}" > short_sha.txt
+ 
+      - name: Upload SHORT_SHA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: short-sha
+          retention-days: 7
+          path: short_sha.txt
 
         
 
