@@ -18,13 +18,13 @@ spec:
       initContainers:
         - name: wait-for-mysql
           image: busybox
-          command: 
+          command:
             - sh
             - -c
             - |
-              MAX_RETRIES=15  
+              MAX_RETRIES=15
               COUNT=0
-              
+
               until nc -z -w 2 mysql-service 3306; do
                 echo "Waiting for mysql..."
                 sleep 2
@@ -34,28 +34,37 @@ spec:
                   exit 1
                 fi
               done
-              
-    
+
       containers:
         - name: flask
-          image: asafnr567/flask-api:2.3
+          # Image tag is injected at deploy time by envsubst in the CD workflow. or locally by an .env file
+          image: ${DOCKERHUB_USERNAME}/knowcars-flask:${SHORT_SHA}
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
           envFrom:
-          - configMapRef:
-              name: flask-config
+            - configMapRef:
+                name: flask-config
           env:
-          - name: MYSQL_USER
-            valueFrom:
-              secretKeyRef:
-                name: mysql-secret
-                key: MYSQL_USER
-          - name: MYSQL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: mysql-secret
-                key: MYSQL_PASSWORD
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
+
+          resources:
+            requests:
+              cpu: "100m"      
+              memory: "128Mi"  
+            limits:
+              cpu: "250m"    
+              memory: "256Mi" 
+
           readinessProbe:
             httpGet:
               path: /api/health
@@ -63,6 +72,3 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
-            
-
-
