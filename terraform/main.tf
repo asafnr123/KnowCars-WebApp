@@ -251,7 +251,7 @@ resource "aws_security_group" "eks_nodes" {
   }
 
   egress {
-    description = "All outbound — for DockerHub pulls via NAT and AWS API calls"
+    description = "All outbound - for DockerHub pulls via NAT and AWS API calls"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -488,7 +488,7 @@ resource "aws_iam_role_policy_attachment" "eks_ssm" {
 
 resource "aws_cloudwatch_log_group" "eks" {
   name              = "/aws/eks/${var.eks_cluster_name}/cluster"
-  retention_in_days = 4
+  retention_in_days = 3
 }
 
 
