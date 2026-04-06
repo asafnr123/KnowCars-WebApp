@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 
-//const cars_with_images_url = "http://192.168.49.2:30080/api/cars?include=image" //for cluster
-//const base_url = "http://192.168.49.2:30080"
-
-const cars_with_images_url = "http://localhost:5000/api/cars?include=image" //for docker environment 
-const base_url = "http://localhost:5000"
+const base_url = process.env.REACT_APP_API_URL || "http://localhost:5000"
+const cars_with_images_url = `${base_url}/api/cars?include=image`
 
 
 export function useCarsWithImages() {
