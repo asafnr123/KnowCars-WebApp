@@ -1,0 +1,263 @@
+name: KnowCars CD
+
+on:
+  workflow_dispatch:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PERMISSIONS
+# ─────────────────────────────────────────────────────────────────────────────
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+jobs:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 1 — VALIDATE KUBERNETES MANIFESTS
+  # Runs kubeconform against all YAML manifests before anything 
+  # ───────────────────────────────────────────────────────────────────────────
+  validate-manifests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      # Before validating, substitute the ${DOCKERHUB_USERNAME} and ${SHORT_SHA}
+      # placeholders with dummy values. kubeconform validates only the YAML structure
+      - name: Validate Flask manifests
+        env:
+          DOCKERHUB_USERNAME: placeholder
+          SHORT_SHA: placeholder
+        run: |
+          envsubst < flask_deployment/flask-deployment.yaml | kubeconform \
+            -strict \
+            -summary \
+            -output pretty \
+            -kubernetes-version 1.29.0 \
+            -
+          kubeconform \
+            -strict \
+            -summary \
+            -output pretty \
+            -kubernetes-version 1.29.0 \
+            flask_deployment/flask-configMap.yaml \
+            flask_deployment/flask-service.yaml
+
+      - name: Validate MySQL manifests
+        env:
+          DOCKERHUB_USERNAME: placeholder
+          SHORT_SHA: placeholder
+        run: |
+          envsubst < mysql_statefulset/mysql-statefulset.yaml | kubeconform \
+            -strict \
+            -summary \
+            -output pretty \
+            -kubernetes-version 1.29.0 \
+            -
+          kubeconform \
+            -strict \
+            -summary \
+            -output pretty \
+            -kubernetes-version 1.29.0 \
+            mysql_statefulset/mysql-service.yaml
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 2 — TERRAFORM
+  # ───────────────────────────────────────────────────────────────────────────
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region:     ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 3 — DEPLOY TO EKS
+  # ───────────────────────────────────────────────────────────────────────────
+  deploy-eks:
+    needs: [validate-manifests, terraform]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region:     ${{ secrets.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ secrets.AWS_REGION }} \
+            --name   ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace knowcars --dry-run=server -o yaml | kubectl apply -f -
+
+      - name: Create/update mysql-secret
+        run: |
+          kubectl create secret generic mysql-secret \
+            --namespace knowcars \
+            --from-literal=MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
+            --from-literal=MYSQL_USER=${{ secrets.MYSQL_USER }} \
+            --from-literal=MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+            --dry-run=server -o yaml | kubectl apply -f -
+
+      # Get the SHORT_SHA from the last successful CI run
+      - name: Get latest successful CI run ID
+        id: ci_run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID=$(gh run list \
+            --workflow CI.yaml \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
+      - name: Download SHORT_SHA artifact from CI
+        uses: actions/download-artifact@v4
+        with:
+          name: short-sha
+          run-id: ${{ steps.ci_run.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read SHORT_SHA
+        id: sha
+        run: echo "SHORT_SHA=$(cat short_sha.txt)" >> $GITHUB_OUTPUT
+
+      # envsubst replaces ${DOCKERHUB_USERNAME} and ${SHORT_SHA} placeholders
+      # inside the YAML files with their real values at deploy time.
+      - name: Apply MySQL manifests
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          SHORT_SHA: ${{ steps.sha.outputs.SHORT_SHA }}
+        run: |
+          kubectl apply -f mysql_statefulset/mysql-service.yaml
+          envsubst < mysql_statefulset/mysql-statefulset.yaml | kubectl apply -f -
+
+      # Wait for MySQL to be fully ready before deploying Flask.
+      - name: Wait for MySQL rollout
+        run: |
+          kubectl rollout status statefulset/mysql-statefulset \
+            --namespace knowcars \
+            --timeout=180s
+
+      - name: Apply Flask manifests
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          SHORT_SHA: ${{ steps.sha.outputs.SHORT_SHA }}
+        run: |
+          kubectl apply -f flask_deployment/flask-configMap.yaml
+          kubectl apply -f flask_deployment/flask-service.yaml
+          envsubst < flask_deployment/flask-deployment.yaml | kubectl apply -f -
+
+      - name: Wait for Flask rollout
+        run: |
+          kubectl rollout status deployment/flask-deployment \
+            --namespace knowcars \
+            --timeout=180s
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 4 — BUILD & DEPLOY REACT FRONTEND TO S3
+  # ───────────────────────────────────────────────────────────────────────────
+  deploy-frontend:
+    needs: terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region:     ${{ secrets.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './frontend_react/package-lock.json'
+
+      - name: Install dependencies
+        run: cd frontend_react && npm ci
+
+      - name: Build React app
+        run: cd frontend_react && npm run build
+        env:
+          REACT_APP_API_URL: http://${{ secrets.ALB_DNS_NAME }}
+
+      - name: Upload build to S3
+        run: |
+          aws s3 sync frontend_react/build/ s3://${{ secrets.S3_FRONTEND_BUCKET }} \
+            --delete \
+            --region ${{ secrets.AWS_REGION }}
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 5 — UPLOAD CAR IMAGES TO S3
+  # ───────────────────────────────────────────────────────────────────────────
+  upload-car-images:
+    needs: terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region:     ${{ secrets.AWS_REGION }}
+
+      - name: Upload car images to S3
+        run: |
+          aws s3 sync backend_api/images/ s3://${{ secrets.S3_IMAGES_BUCKET }}/images/ \
+            --delete \
+            --region ${{ secrets.AWS_REGION }}
+
