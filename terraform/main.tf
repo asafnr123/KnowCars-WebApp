@@ -356,7 +356,8 @@ resource "aws_iam_policy" "github_actions" {
           "s3:GetBucketPublicAccessBlock", "s3:PutBucketPublicAccessBlock",
           "s3:PutBucketPolicy", "s3:GetBucketPolicy",
           "s3:CreateBucket", "s3:DeleteBucket",
-          "s3:GetBucketAcl", "s3:PutBucketAcl"
+          "s3:GetBucketAcl", "s3:PutBucketAcl",
+          "s3:GetBucketCORS", "s3:PutBucketCORS"
         ]
         Resource = [
           "arn:aws:s3:::${var.frontend_bucket_name}",
