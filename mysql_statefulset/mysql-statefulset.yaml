@@ -6,10 +6,15 @@ metadata:
   labels:
     app: mysql
 spec:
-  replicas: 2
+  # replicas: 1 — one stable pod with one persistent EBS volume.
+  replicas: 1
+
+  serviceName: mysql-service
+
   selector:
     matchLabels:
       app: mysql
+
   template:
     metadata:
       labels:
@@ -17,7 +22,8 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: asafnr567/mysql-db:3.3
+          # Image tag is injected at deploy time by envsubst in the CD workflow. or locally by an .env file
+          image: ${DOCKERHUB_USERNAME}/knowcars-mysql:${SHORT_SHA}
           imagePullPolicy: Always
           ports:
             - containerPort: 3306
@@ -37,7 +43,15 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: MYSQL_PASSWORD
-                  
+
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "768Mi"
+
           livenessProbe:
             exec:
               command:
@@ -48,31 +62,28 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 5
             failureThreshold: 3
-            
+
           readinessProbe:
             exec:
               command:
                 - sh
                 - -c
                 - "mysqladmin ping -u$MYSQL_USER -p$MYSQL_PASSWORD"
-                
             initialDelaySeconds: 15
             periodSeconds: 5
             timeoutSeconds: 5
             failureThreshold: 3
-            
+
           volumeMounts:
             - name: mysql-storage
               mountPath: /var/lib/mysql
+
+  
   volumeClaimTemplates:
     - metadata:
         name: mysql-storage
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: ["ReadWriteOnce"] 
         resources:
           requests:
             storage: 1Gi
-          
- 
-           
-

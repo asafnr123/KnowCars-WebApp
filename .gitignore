@@ -5,6 +5,7 @@ __pycache__/
 *.pyc
 venv/
 terraform/*/.terraform/
+terraform/.terraform/
 terraform/*/terraform.tfstate
 terraform/*/terraform.tfstate.backup
 terraform/*/*.tfvars

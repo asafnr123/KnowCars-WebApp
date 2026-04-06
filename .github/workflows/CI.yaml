@@ -2,9 +2,9 @@ name: knowCars CI
 
 on:
   workflow_dispatch:
-  
+
   pull_request:
-    branches: ["master"]  
+    branches: ["develop"]
 
 jobs:
   test-build-push:
@@ -25,12 +25,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'  
+          node-version: '18'
           cache: 'npm'
           cache-dependency-path: './frontend_react/package-lock.json'
 
-      # Install dependencies 
-      - name: install dependencies 
+      # Install dependencies
+      - name: install dependencies
         run: pip install -r requirements-test.txt && cd ./frontend_react && npm ci
 
       # Create .env file from secrets
@@ -47,7 +47,7 @@ jobs:
 
       # Start ESLint tests
       - name: run ESLint tests
-        run: cd ./frontend_react && npm exec eslint -- . --ext .js,.jsx,.ts,.tsx --max-warnings=0 
+        run: cd ./frontend_react && npm exec eslint -- . --ext .js,.jsx,.ts,.tsx --max-warnings=0
 
       # Set up Docker Buildx
       - name: Set up Docker Buildx
@@ -58,15 +58,15 @@ jobs:
         run: |
           # Get short commit SHA for tagging
           SHORT_SHA=$(git rev-parse --short HEAD)
-          
+
           # Build Flask image
           docker buildx build \
             --load \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-flask:latest \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-flask:${SHORT_SHA} \
             ./backend_api
-          
-          # Build MySQL image 
+
+          # Build MySQL image
           docker buildx build \
             --load \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:latest \
@@ -92,28 +92,35 @@ jobs:
       - name: Show docker logs on failure
         if: failure()
         run: docker compose -f docker-compose-ci.yaml logs
-      
+
       # Stop docker compose services
       - name: Stop docker-compose services
         if: always()
         run: docker compose -f docker-compose-ci.yaml down
-      
+
       # Push Docker images to DockerHub
       - name: Push images to DockerHub
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
-          
+
           # Push Flask image
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-flask:${SHORT_SHA}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-flask:latest
-          
+
           # Push MySQL image
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:${SHORT_SHA}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/knowcars-mysql:latest
 
+      # Save short_sha for artifact     
+      - name: Save SHORT_SHA as artifact
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "$SHORT_SHA" > short_sha.txt
 
-        
-
-
-
-    
+      # Upload as artifact for CD.yaml
+      - name: Upload SHORT_SHA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: short-sha
+          retention-days: 7
+          path: short_sha.txt
