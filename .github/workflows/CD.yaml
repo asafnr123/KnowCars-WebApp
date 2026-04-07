@@ -171,6 +171,10 @@ jobs:
 
       # envsubst replaces ${DOCKERHUB_USERNAME} and ${SHORT_SHA} placeholders
       # inside the YAML files with their real values at deploy time.
+      - name: Apply StorageClass
+        run: |
+          kubectl apply -f mysql_statefulset/ebs-storage-class.yaml
+
       - name: Apply MySQL manifests
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}

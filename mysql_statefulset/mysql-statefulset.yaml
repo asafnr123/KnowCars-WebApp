@@ -83,7 +83,8 @@ spec:
     - metadata:
         name: mysql-storage
       spec:
-        accessModes: ["ReadWriteOnce"] 
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: gp2-csi
         resources:
           requests:
             storage: 1Gi
