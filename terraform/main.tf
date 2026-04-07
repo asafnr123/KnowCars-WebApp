@@ -512,6 +512,14 @@ resource "aws_eks_cluster" "knowcars" {
   
 
 
+  access_config {
+    authentication_mode = "API_AND_CONFIG_MAP"
+  }
+
+  lifecycle {
+    ignore_changes = [access_config]
+  }
+
   # Enable control plane logs — visibility into API server, and auth.
   # Logs appear in CloudWatch under /aws/eks/knowcars-cluster/cluster.
   enabled_cluster_log_types = ["api", "authenticator"]
@@ -541,6 +549,25 @@ resource "aws_launch_template" "eks_nodes" {
   }
 
   tags = { Name = "knowcars-eks-launch-template" }
+}
+
+# Grant the GitHub Actions IAM role access to the EKS cluster Kubernetes API.
+resource "aws_eks_access_entry" "github_actions" {
+  cluster_name  = aws_eks_cluster.knowcars.name
+  principal_arn = aws_iam_role.github_actions.arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "github_actions_admin" {
+  cluster_name  = aws_eks_cluster.knowcars.name
+  principal_arn = aws_iam_role.github_actions.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [aws_eks_access_entry.github_actions]
 }
 
 # EKS node group — EC2 instances in PRIVATE subnets.
