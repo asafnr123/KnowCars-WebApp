@@ -128,9 +128,8 @@ jobs:
         run: |
           aws sts get-caller-identity
           aws eks update-kubeconfig \
-            --region   ${{ secrets.AWS_REGION }} \
-            --name     ${{ secrets.EKS_CLUSTER_NAME }} \
-            --role-arn ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+            --region ${{ secrets.AWS_REGION }} \
+            --name   ${{ secrets.EKS_CLUSTER_NAME }}
 
       - name: Create namespace if not exists
         run: |
