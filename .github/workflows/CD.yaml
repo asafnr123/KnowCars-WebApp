@@ -142,7 +142,7 @@ jobs:
             --from-literal=MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
             --from-literal=MYSQL_USER=${{ secrets.MYSQL_USER }} \
             --from-literal=MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
-            --dry-run=server -o yaml | kubectl apply -f -
+            --dry-run=client -o yaml | kubectl apply -f -
 
       # Get the SHORT_SHA from the last successful CI run
       - name: Get latest successful CI run ID
