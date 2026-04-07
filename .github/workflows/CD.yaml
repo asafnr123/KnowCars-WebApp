@@ -241,23 +241,23 @@ jobs:
   # ───────────────────────────────────────────────────────────────────────────
   # JOB 5 — UPLOAD CAR IMAGES TO S3
   # ───────────────────────────────────────────────────────────────────────────
-  upload-car-images:
-    needs: terraform
-    runs-on: ubuntu-latest
+ # upload-car-images:
+ #   needs: terraform
+ #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+ #   steps:
+ #     - name: Checkout repository
+ #       uses: actions/checkout@v4
 
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
-          aws-region:     ${{ secrets.AWS_REGION }}
+ #     - name: Configure AWS credentials (OIDC)
+ #       uses: aws-actions/configure-aws-credentials@v4
+ #       with:
+ #         role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+ #         aws-region:     ${{ secrets.AWS_REGION }}
 
-      - name: Upload car images to S3
-        run: |
-          aws s3 sync backend_api/images/ s3://${{ secrets.S3_IMAGES_BUCKET }}/images/ \
-            --delete \
-            --region ${{ secrets.AWS_REGION }}
+ #     - name: Upload car images to S3
+ #       run: |
+ #         aws s3 sync backend_api/images/ s3://${{ secrets.S3_IMAGES_BUCKET }}/images/ \
+ #           --delete \
+ #           --region ${{ secrets.AWS_REGION }}
 
