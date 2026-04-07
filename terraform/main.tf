@@ -649,8 +649,9 @@ resource "aws_lb_listener" "http" {
 
 # Frontend — public static website hosting
 resource "aws_s3_bucket" "frontend" {
-  bucket = var.frontend_bucket_name
-  tags   = { Name = "knowcars-frontend" }
+  bucket        = var.frontend_bucket_name
+  force_destroy = true
+  tags          = { Name = "knowcars-frontend" }
 }
 
 resource "aws_s3_bucket_public_access_block" "frontend" {
@@ -684,8 +685,9 @@ resource "aws_s3_bucket_website_configuration" "frontend" {
 
 # Car images — public (future images uploaded here, current ones served by Flask)
 resource "aws_s3_bucket" "car_images" {
-  bucket = var.images_bucket_name
-  tags   = { Name = "knowcars-cars-images" }
+  bucket        = var.images_bucket_name
+  force_destroy = true
+  tags          = { Name = "knowcars-cars-images" }
 }
 
 resource "aws_s3_bucket_public_access_block" "car_images" {
