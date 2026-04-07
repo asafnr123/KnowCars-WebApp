@@ -260,4 +260,3 @@ jobs:
  #         aws s3 sync backend_api/images/ s3://${{ secrets.S3_IMAGES_BUCKET }}/images/ \
  #           --delete \
  #           --region ${{ secrets.AWS_REGION }}
-

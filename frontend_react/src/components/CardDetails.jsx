@@ -7,7 +7,7 @@ export default function CarDetails({ car, url }) {
   return (
     <div className="car-detail-container">
       <div className="car-image">
-        <img src={`${base_img_url}${car.image_url}`} alt={`${car.make} ${car.model}`} />
+        <img src={car.image_url?.startsWith('http') ? car.image_url : `${base_img_url}${car.image_url}`} alt={`${car.make} ${car.model}`} />
       </div>
       <div className="car-info">
         <h2>{car.make} {car.model}</h2>
