@@ -225,6 +225,22 @@ jobs:
           echo "Timed out waiting for NLB hostname"
           exit 1
 
+      - name: Smoke test — API returns cars with images
+        run: |
+          DNS=${{ steps.nlb.outputs.dns }}
+          echo "Testing http://${DNS}:5000/api/cars?include=image ..."
+          for i in $(seq 1 10); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://${DNS}:5000/api/cars?include=image")
+            if [ "$STATUS" = "200" ]; then
+              echo "Smoke test passed (HTTP $STATUS)"
+              exit 0
+            fi
+            echo "Attempt $i/10 — got HTTP $STATUS, retrying in 10s..."
+            sleep 10
+          done
+          echo "Smoke test failed — API did not respond with 200"
+          exit 1
+
   # ───────────────────────────────────────────────────────────────────────────
   # JOB 4 — BUILD & DEPLOY REACT FRONTEND TO S3
   # Runs after deploy-eks so the NLB DNS name is available as a job output
