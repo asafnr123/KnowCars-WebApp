@@ -173,46 +173,20 @@ resource "aws_route_table_association" "private" {
 # SECURITY GROUPS
 # ───────────────────────────────────────────────────────────────────────────────
 
-# — ALB Security Group ————————————————————————————————————————————————————————
-# Allows HTTP traffic from the internet in, and all outbound traffic out
-# (so it can forward requests to Flask pods in private subnets).
-resource "aws_security_group" "alb" {
-  name        = "knowcars-alb-sg"
-  description = "Allow HTTP inbound from internet to ALB"
-  vpc_id      = aws_vpc.knowcars.id
-
-  ingress {
-    description = "HTTP from internet"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    description = "All outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = { Name = "knowcars-alb-sg" }
-}
-
 # — EKS Node Security Group ———————————————————————————————————————————————————
 resource "aws_security_group" "eks_nodes" {
   name        = "knowcars-eks-nodes-sg"
   description = "Security group for EKS worker nodes"
   vpc_id      = aws_vpc.knowcars.id
 
-  # Rule 1: ALB → Flask pods on port 5000
+  # Rule 1: NLB → Flask pods on port 5000.
+  # NLB preserves the client source IP, so we allow from anywhere (0.0.0.0/0).
   ingress {
-    description     = "Flask API traffic from ALB"
-    from_port       = 5000
-    to_port         = 5000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+    description = "Flask API traffic from NLB"
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Rule 2: MySQL traffic from EKS nodes only (Flask pod → MySQL pod).
@@ -247,7 +221,7 @@ resource "aws_security_group" "eks_nodes" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    self        = true  
+    self        = true
   }
 
   egress {
@@ -602,48 +576,6 @@ resource "aws_eks_node_group" "knowcars" {
 
 
 # ───────────────────────────────────────────────────────────────────────────────
-# APPLICATION LOAD BALANCER
-# ───────────────────────────────────────────────────────────────────────────────
-
-resource "aws_lb" "knowcars" {
-  name               = "knowcars-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = aws_subnet.public[*].id
-  tags               = { Name = "knowcars-alb" }
-}
-
-resource "aws_lb_target_group" "flask" {
-  name        = "knowcars-flask-tg"
-  port        = 5000
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.knowcars.id
-  target_type = "ip"
-
-  health_check {
-    path                = "/api/health"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 3
-  }
-
-  tags = { Name = "knowcars-flask-tg" }
-}
-
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.knowcars.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.flask.arn
-  }
-}
-
-# ───────────────────────────────────────────────────────────────────────────────
 # S3 BUCKETS
 # ───────────────────────────────────────────────────────────────────────────────
 
@@ -773,11 +705,6 @@ resource "aws_eks_addon" "ebs_csi_driver" {
 output "github_actions_role_arn" {
   description = "Copy into AWS_GITHUB_ACTIONS_ROLE_ARN GitHub Secret"
   value       = aws_iam_role.github_actions.arn
-}
-
-output "alb_dns_name" {
-  description = "Copy into ALB_DNS_NAME GitHub Secret"
-  value       = aws_lb.knowcars.dns_name
 }
 
 output "eks_cluster_name" {

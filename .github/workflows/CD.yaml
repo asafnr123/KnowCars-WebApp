@@ -108,6 +108,8 @@ jobs:
   deploy-eks:
     needs: [validate-manifests, terraform]
     runs-on: ubuntu-latest
+    outputs:
+      nlb_dns: ${{ steps.nlb.outputs.dns }}
 
     steps:
       - name: Checkout repository
@@ -205,11 +207,30 @@ jobs:
             --namespace knowcars \
             --timeout=180s
 
+      - name: Get NLB DNS name
+        id: nlb
+        run: |
+          for i in $(seq 1 20); do
+            DNS=$(kubectl get svc flask-service \
+              --namespace knowcars \
+              -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [ -n "$DNS" ]; then
+              echo "NLB DNS: $DNS"
+              echo "dns=$DNS" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            echo "Waiting for NLB hostname... attempt $i/20"
+            sleep 15
+          done
+          echo "Timed out waiting for NLB hostname"
+          exit 1
+
   # ───────────────────────────────────────────────────────────────────────────
   # JOB 4 — BUILD & DEPLOY REACT FRONTEND TO S3
+  # Runs after deploy-eks so the NLB DNS name is available as a job output
   # ───────────────────────────────────────────────────────────────────────────
   deploy-frontend:
-    needs: terraform
+    needs: deploy-eks
     runs-on: ubuntu-latest
 
     steps:
@@ -235,7 +256,7 @@ jobs:
       - name: Build React app
         run: cd frontend_react && npm run build
         env:
-          REACT_APP_API_URL: http://${{ secrets.ALB_DNS_NAME }}
+          REACT_APP_API_URL: http://${{ needs.deploy-eks.outputs.nlb_dns }}
 
       - name: Upload build to S3
         run: |
