@@ -525,6 +525,25 @@ resource "aws_launch_template" "eks_nodes" {
   tags = { Name = "knowcars-eks-launch-template" }
 }
 
+# Grant your SSO admin role access to the EKS cluster for console and kubectl access.
+resource "aws_eks_access_entry" "admin" {
+  cluster_name  = aws_eks_cluster.knowcars.name
+  principal_arn = "arn:aws:iam::084375579193:role/aws-reserved/sso.amazonaws.com/eu-central-1/AWSReservedSSO_AdminAccess_8516724993890ae6"
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "admin" {
+  cluster_name  = aws_eks_cluster.knowcars.name
+  principal_arn = "arn:aws:iam::084375579193:role/aws-reserved/sso.amazonaws.com/eu-central-1/AWSReservedSSO_AdminAccess_8516724993890ae6"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [aws_eks_access_entry.admin]
+}
+
 # Grant the GitHub Actions IAM role access to the EKS cluster Kubernetes API.
 resource "aws_eks_access_entry" "github_actions" {
   cluster_name  = aws_eks_cluster.knowcars.name

@@ -256,7 +256,7 @@ jobs:
       - name: Build React app
         run: cd frontend_react && npm run build
         env:
-          REACT_APP_API_URL: http://${{ needs.deploy-eks.outputs.nlb_dns }}
+          REACT_APP_API_URL: http://${{ needs.deploy-eks.outputs.nlb_dns }}:5000
 
       - name: Upload build to S3
         run: |
