@@ -268,7 +268,6 @@ jobs:
 
   # ───────────────────────────────────────────────────────────────────────────
   # JOB 4 — BUILD & DEPLOY REACT FRONTEND TO S3
-  # Runs after deploy-eks so the NLB DNS name is available as a job output
   # ───────────────────────────────────────────────────────────────────────────
   deploy-frontend:
     needs: deploy-eks
@@ -284,6 +283,30 @@ jobs:
           role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region:     ${{ secrets.AWS_REGION }}
 
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ secrets.AWS_REGION }} \
+            --name   ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Get CLB DNS from flask-service
+        id: clb
+        run: |
+          DNS=$(kubectl get svc flask-service \
+            --namespace knowcars \
+            -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "CLB DNS: $DNS"
+          if [ -z "$DNS" ]; then
+            echo "ERROR: flask-service has no external hostname"
+            exit 1
+          fi
+          echo "dns=$DNS" >> $GITHUB_OUTPUT
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -293,14 +316,11 @@ jobs:
 
       - name: Install dependencies
         run: cd frontend_react && npm ci
-        
-      - name: check NLB is correct
-        run: echo "http://${{ needs.deploy-eks.outputs.nlb_dns }}:5000"
 
       - name: Build React app
         run: cd frontend_react && npm run build
         env:
-          REACT_APP_API_URL: http://${{ needs.deploy-eks.outputs.nlb_dns }}:5000
+          REACT_APP_API_URL: http://${{ steps.clb.outputs.dns }}:5000
 
       - name: Upload build to S3
         run: |
