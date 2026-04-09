@@ -307,9 +307,10 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
 }
 
 resource "aws_iam_role" "github_actions" {
-  name               = "knowcars-github-actions-role"
-  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
-  tags               = { Name = "knowcars-github-actions-role" }
+  name                 = "knowcars-github-actions-role"
+  assume_role_policy   = data.aws_iam_policy_document.github_actions_assume_role.json
+  max_session_duration = 7200  # 2 hours — destroy can exceed the default 1-hour limit
+  tags                 = { Name = "knowcars-github-actions-role" }
 }
 
 # Permissions policy — what the CD pipeline is allowed to do in AWS.
