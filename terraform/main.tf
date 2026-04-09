@@ -179,12 +179,14 @@ resource "aws_security_group" "eks_nodes" {
   description = "Security group for EKS worker nodes"
   vpc_id      = aws_vpc.knowcars.id
 
-  # Rule 1: NLB → Flask pods on port 5000.
-  # NLB preserves the client source IP, so we allow from anywhere (0.0.0.0/0).
+  # Rule 1: NLB → NodePort range.
+  # Kubernetes assigns a NodePort (30000-32767) for the flask-service LoadBalancer.
+  # The NLB forwards external traffic to this NodePort on each node.
+  # NLB preserves client source IP so we cannot restrict by security group.
   ingress {
-    description = "Flask API traffic from NLB"
-    from_port   = 5000
-    to_port     = 5000
+    description = "NLB traffic to NodePort range"
+    from_port   = 30000
+    to_port     = 32767
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -542,6 +544,25 @@ resource "aws_eks_access_policy_association" "admin" {
   }
 
   depends_on = [aws_eks_access_entry.admin]
+}
+
+# Grant the AWS root account access to the EKS cluster for web console visibility.
+resource "aws_eks_access_entry" "root" {
+  cluster_name  = aws_eks_cluster.knowcars.name
+  principal_arn = "arn:aws:iam::084375579193:root"
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "root_admin" {
+  cluster_name  = aws_eks_cluster.knowcars.name
+  principal_arn = "arn:aws:iam::084375579193:root"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [aws_eks_access_entry.root]
 }
 
 # Grant the GitHub Actions IAM role access to the EKS cluster Kubernetes API.

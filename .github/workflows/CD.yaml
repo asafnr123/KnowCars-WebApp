@@ -226,19 +226,44 @@ jobs:
           exit 1
 
       - name: Smoke test — API returns cars with images
+        env:
+          DNS: ${{ steps.nlb.outputs.dns }}
         run: |
-          DNS=${{ steps.nlb.outputs.dns }}
-          echo "Testing http://${DNS}:5000/api/cars?include=image ..."
+          echo "=== CLB diagnostics ==="
+          echo "DNS: $DNS"
+
+          # Show CLB scheme (internet-facing vs internal) and port mapping
+          CLB_NAME=$(aws elb describe-load-balancers --region ${{ secrets.AWS_REGION }} \
+            --query "LoadBalancerDescriptions[?DNSName=='${DNS}'].LoadBalancerName" \
+            --output text)
+          echo "CLB name: $CLB_NAME"
+          aws elb describe-load-balancers --region ${{ secrets.AWS_REGION }} \
+            --load-balancer-names "$CLB_NAME" \
+            --query 'LoadBalancerDescriptions[0].{Scheme:Scheme,Subnets:Subnets,Listeners:ListenerDescriptions[*].Listener}' \
+            --output json
+
+          echo ""
+          echo "=== Flask service NodePort ==="
+          kubectl get svc flask-service -n knowcars
+
+          echo ""
+          echo "=== Smoke test ==="
           for i in $(seq 1 10); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://${DNS}:5000/api/cars?include=image")
-            if [ "$STATUS" = "200" ]; then
-              echo "Smoke test passed (HTTP $STATUS)"
+            HTTP_CODE=$(curl -s -o /tmp/smoke_body.txt -w "%{http_code}" \
+              --max-time 10 \
+              "http://${DNS}:5000/api/cars?include=image" || true)
+            CURL_EXIT=$?
+            echo "Attempt $i/10 — curl exit=$CURL_EXIT HTTP=$HTTP_CODE"
+            if [ "$CURL_EXIT" != "0" ]; then
+              echo "  curl error $CURL_EXIT (52=empty reply, 28=timeout, 7=refused)"
+            fi
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Smoke test passed"
               exit 0
             fi
-            echo "Attempt $i/10 — got HTTP $STATUS, retrying in 10s..."
             sleep 10
           done
-          echo "Smoke test failed — API did not respond with 200"
+          echo "Smoke test failed"
           exit 1
 
   # ───────────────────────────────────────────────────────────────────────────
