@@ -293,6 +293,9 @@ jobs:
 
       - name: Install dependencies
         run: cd frontend_react && npm ci
+        
+      - name: check NLB is correct
+        run: echo "http://${{ needs.deploy-eks.outputs.nlb_dns }}:5000"
 
       - name: Build React app
         run: cd frontend_react && npm run build
