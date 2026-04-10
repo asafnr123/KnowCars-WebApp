@@ -115,6 +115,53 @@ jobs:
         if: ${{ inputs.action == 'apply' }}
         run: terraform apply -auto-approve tfplan
 
+      - name: Install kubectl (destroy only)
+        if: ${{ inputs.action == 'destroy' }}
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl for EKS (destroy only)
+        if: ${{ inputs.action == 'destroy' }}
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ secrets.AWS_REGION }} \
+            --name   ${{ secrets.EKS_CLUSTER_NAME }} || true
+
+      # The Kubernetes CLB/NLB created by flask-service (type: LoadBalancer) is NOT
+      # managed by Terraform. Deleting the namespace removes the service and triggers
+      # the AWS cloud controller to deprovision the CLB. If we skip this, Terraform
+      # can't delete the subnets or detach the IGW (DependencyViolation).
+      - name: Delete Kubernetes namespace to deprovision CLB/NLB
+        if: ${{ inputs.action == 'destroy' }}
+        run: |
+          kubectl delete namespace knowcars --ignore-not-found --timeout=120s || true
+
+      - name: Wait for CLB/NLB to be fully deprovisioned
+        if: ${{ inputs.action == 'destroy' }}
+        run: |
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --region ${{ secrets.AWS_REGION }} \
+            --filters "Name=tag:Name,Values=knowcars-vpc" \
+            --query 'Vpcs[0].VpcId' --output text)
+          echo "VPC: $VPC_ID"
+          for i in $(seq 1 20); do
+            CLB_COUNT=$(aws elb describe-load-balancers \
+              --region ${{ secrets.AWS_REGION }} \
+              --query "length(LoadBalancerDescriptions[?VPCId=='${VPC_ID}'])" \
+              --output text 2>/dev/null || echo "0")
+            NLB_COUNT=$(aws elbv2 describe-load-balancers \
+              --region ${{ secrets.AWS_REGION }} \
+              --query "length(LoadBalancers[?VpcId=='${VPC_ID}'])" \
+              --output text 2>/dev/null || echo "0")
+            echo "Attempt $i/20 — CLB: $CLB_COUNT  NLB: $NLB_COUNT"
+            if [ "$CLB_COUNT" = "0" ] && [ "$NLB_COUNT" = "0" ]; then
+              echo "All load balancers removed, proceeding with destroy"
+              break
+            fi
+            sleep 15
+          done
+
       - name: Terraform Destroy
         if: ${{ inputs.action == 'destroy' }}
         run: terraform destroy -auto-approve
