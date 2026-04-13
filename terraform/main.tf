@@ -10,7 +10,7 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    # tls provider is needed to fetch GitHub's OIDC certificate thumbprint.
+    # tls provider is needed to fetch the EKS cluster OIDC certificate thumbprint.
     tls = {
       source  = "hashicorp/tls"
       version = "~> 4.0"
@@ -63,11 +63,6 @@ variable "eks_cluster_name" {
   default     = "knowcars-cluster"
 }
 
-variable "github_repo" {
-  description = "GitHub repo in format owner/repo-name — used to lock OIDC trust to your repo only"
-  type        = string
-  default     = "asafnr123/KnowCars-WebApp" 
-}
 
 # ───────────────────────────────────────────────────────────────────────────────
 # DATA SOURCES
@@ -264,145 +259,18 @@ resource "aws_security_group" "eks_cluster" {
 }
 
 # ───────────────────────────────────────────────────────────────────────────────
-# OIDC IDENTITY PROVIDER + GITHUB ACTIONS IAM ROLE
+# GITHUB ACTIONS IAM ROLE — managed manually in AWS, NOT by Terraform.
+#
+# This role is intentionally kept outside Terraform so that `terraform destroy`
+# cannot delete it mid-run (which would revoke the workflow's own credentials
+# and cause every subsequent AWS call to fail with 403).
+#
+# To recreate it manually see the project README or re-run the one-time setup
+# script. The ARN is hardcoded below so EKS access entries can reference it.
 # ───────────────────────────────────────────────────────────────────────────────
 
-# Fetch GitHub's OIDC TLS certificate thumbprint.
-# The tls provider (now declared above) handles this automatically.
-data "tls_certificate" "github_oidc" {
-  url = "https://token.actions.githubusercontent.com"
-}
-
-resource "aws_iam_openid_connect_provider" "github_actions" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = [data.tls_certificate.github_oidc.certificates[0].sha1_fingerprint]
-}
-
-# Trust policy — who can assume this role.
-# Locked to: tokens from GitHub OIDC + your specific repo + master branch only.
-data "aws_iam_policy_document" "github_actions_assume_role" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    # Only the master branch of your specific repo can use this role
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/master"]
-    }
-  }
-}
-
-resource "aws_iam_role" "github_actions" {
-  name                 = "knowcars-github-actions-role"
-  assume_role_policy   = data.aws_iam_policy_document.github_actions_assume_role.json
-  max_session_duration = 7200  # 2 hours — destroy can exceed the default 1-hour limit
-  tags                 = { Name = "knowcars-github-actions-role" }
-}
-
-# Permissions policy — what the CD pipeline is allowed to do in AWS.
-# Scoped to exactly what Terraform + kubectl + AWS CLI need.
-resource "aws_iam_policy" "github_actions" {
-  name        = "knowcars-github-actions-policy"
-  description = "Permissions for KnowCars CD pipeline"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "S3AppBucketsAccess"
-        Effect = "Allow"
-        Action = ["s3:*"]
-        Resource = [
-          "arn:aws:s3:::${var.frontend_bucket_name}",
-          "arn:aws:s3:::${var.frontend_bucket_name}/*",
-          "arn:aws:s3:::${var.images_bucket_name}",
-          "arn:aws:s3:::${var.images_bucket_name}/*",
-        ]
-      },
-      {
-        Sid    = "S3TfstateAccess"
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject", "s3:PutObject",
-          "s3:ListBucket", "s3:GetBucketLocation",
-          "s3:GetBucketVersioning",
-          "s3:GetAccelerateConfiguration",
-          "s3:GetBucketRequestPayment"
-        ]
-        Resource = [
-          "arn:aws:s3:::${var.tfstate_bucket_name}",
-          "arn:aws:s3:::${var.tfstate_bucket_name}/*",
-        ]
-      },
-      {
-        Sid      = "EKSAccess"
-        Effect   = "Allow"
-        Action   = ["eks:*"]
-        Resource = "*"
-      },
-      {
-        Sid      = "EC2Access"
-        Effect   = "Allow"
-        Action   = ["ec2:*", "elasticloadbalancing:*"]
-        Resource = "*"
-      },
-      {
-        # Full IAM permissions Terraform needs to create, update, list,
-        # and destroy roles, policies, and the OIDC provider.
-        Sid    = "IAMAccess"
-        Effect = "Allow"
-        Action = [
-          "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:ListRoles",
-          "iam:UpdateRole", "iam:TagRole", "iam:UntagRole",
-          "iam:AttachRolePolicy", "iam:DetachRolePolicy",
-          "iam:ListRolePolicies", "iam:ListAttachedRolePolicies",
-          "iam:PassRole",
-          "iam:CreatePolicy", "iam:DeletePolicy", "iam:GetPolicy",
-          "iam:GetPolicyVersion", "iam:ListPolicyVersions",
-          "iam:CreatePolicyVersion", "iam:DeletePolicyVersion",
-          "iam:TagPolicy",
-          "iam:CreateOpenIDConnectProvider", "iam:DeleteOpenIDConnectProvider",
-          "iam:GetOpenIDConnectProvider", "iam:TagOpenIDConnectProvider",
-          "iam:CreateInstanceProfile", "iam:DeleteInstanceProfile",
-          "iam:GetInstanceProfile", "iam:AddRoleToInstanceProfile",
-          "iam:RemoveRoleFromInstanceProfile",
-          "iam:ListInstanceProfilesForRole"
-        ]
-        Resource = "*"
-      },
-      {
-        # CloudWatch Logs — EKS control plane logs and general observability.
-        Sid    = "LogsAccess"
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup", "logs:DeleteLogGroup",
-          "logs:DescribeLogGroups", "logs:ListTagsLogGroup",
-          "logs:PutRetentionPolicy", "logs:TagLogGroup",
-          "logs:TagResource", "logs:ListTagsForResource"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "github_actions" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = aws_iam_policy.github_actions.arn
+locals {
+  github_actions_role_arn = "arn:aws:iam::084375579193:role/knowcars-github-actions-role"
 }
 
 # ───────────────────────────────────────────────────────────────────────────────
@@ -567,15 +435,16 @@ resource "aws_eks_access_policy_association" "root_admin" {
 }
 
 # Grant the GitHub Actions IAM role access to the EKS cluster Kubernetes API.
+# principal_arn points to the manually-managed role (see locals above).
 resource "aws_eks_access_entry" "github_actions" {
   cluster_name  = aws_eks_cluster.knowcars.name
-  principal_arn = aws_iam_role.github_actions.arn
+  principal_arn = local.github_actions_role_arn
   type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "github_actions_admin" {
   cluster_name  = aws_eks_cluster.knowcars.name
-  principal_arn = aws_iam_role.github_actions.arn
+  principal_arn = local.github_actions_role_arn
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
 
   access_scope {
@@ -744,8 +613,8 @@ resource "aws_eks_addon" "ebs_csi_driver" {
 # OUTPUTS
 # ───────────────────────────────────────────────────────────────────────────────
 output "github_actions_role_arn" {
-  description = "Copy into AWS_GITHUB_ACTIONS_ROLE_ARN GitHub Secret"
-  value       = aws_iam_role.github_actions.arn
+  description = "ARN of the manually-managed GitHub Actions IAM role"
+  value       = local.github_actions_role_arn
 }
 
 output "eks_cluster_name" {
