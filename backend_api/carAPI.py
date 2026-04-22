@@ -8,7 +8,7 @@ from backend_api.mysqlConnection import get_connection
 
 carApi = Flask(__name__)
 carApi.config['IMAGES_FOLDER'] = './images'
-CORS(carApi)
+CORS(carApi, allow_headers=["X-API-Key", "Content-Type"])
 
 API_KEY = os.environ.get("API_KEY")
 
