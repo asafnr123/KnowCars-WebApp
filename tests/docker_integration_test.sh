@@ -64,23 +64,28 @@ check_if_db_exists() {
 check_endpoint() {
     local url=$1
     local max_attempts=$2
+    local header=${3:-""}
     local attempt=1
-    
-    
+
+
     while [ $attempt -le $max_attempts ]; do
-    
-        status_code=$(curl -sf -w "%{http_code}" -o /dev/null "$url" 2>&1)
+
+        if [ -n "$header" ]; then
+            status_code=$(curl -sf -H "$header" -w "%{http_code}" -o /dev/null "$url" 2>&1)
+        else
+            status_code=$(curl -sf -w "%{http_code}" -o /dev/null "$url" 2>&1)
+        fi
         if [ "$status_code" = "200" ]; then
             echo "$url pass, Status code: $status_code"
             return 0
         fi
-        
+
         echo "Attempt $attempt/$max_attempts - Endpoint is not ready yet"
         attempt=$((attempt + 1))
         sleep 2
-        
+
     done
-    
+
     # if response doesnt return status code 200 return 1
     return 1
 }
@@ -110,7 +115,7 @@ main() {
     
 
     cars_with_images="http://localhost:5000/api/cars?include=image"
-    if ! check_endpoint "$cars_with_images" 10; then    
+    if ! check_endpoint "$cars_with_images" 10 "X-API-Key: ${API_KEY}"; then
         echo "Endpoint at $cars_with_images failed"
         exit 4
     fi
