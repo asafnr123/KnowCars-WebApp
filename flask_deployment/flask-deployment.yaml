@@ -56,6 +56,11 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: MYSQL_PASSWORD
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: flask-secret
+                  key: API_KEY
 
           resources:
             requests:
