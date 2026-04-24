@@ -174,7 +174,7 @@ def test_get_car_db_error(client, mock_db):
 
 def test_get_car_not_found(client, mock_db, all_fields_car):
     mock_cursor, mock_connection = mock_db
-    
+
     expected_value = None
     mock_cursor.fetchone.return_value = expected_value
 
@@ -182,4 +182,49 @@ def test_get_car_not_found(client, mock_db, all_fields_car):
     assert response.status_code == 404
     data = response.get_json()
     assert "error" in data
+
+
+# ── API key tests ─────────────────────────────────────────────────────────────
+
+@pytest.fixture
+def api_key(mocker):
+    mocker.patch("backend_api.carAPI.API_KEY", "test-key")
+    return "test-key"
+
+
+def test_request_without_api_key_rejected(client, api_key):
+    response = client.get("/api/cars")
+    assert response.status_code == 401
+    assert "error" in response.get_json()
+
+
+def test_request_with_correct_api_key_allowed(client, mock_db, api_key):
+    mock_cursor, mock_connection = mock_db
+    mock_cursor.fetchall.return_value = []
+    response = client.get("/api/cars", headers={"X-API-Key": "test-key"})
+    assert response.status_code == 200
+
+
+def test_request_with_wrong_api_key_rejected(client, api_key):
+    response = client.get("/api/cars", headers={"X-API-Key": "wrong-key"})
+    assert response.status_code == 401
+
+
+def test_cors_preflight_allowed_without_api_key(client, api_key):
+    response = client.options("/api/cars", headers={
+        "Origin": "http://localhost:3000",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "X-API-Key"
+    })
+    assert response.status_code == 200
+
+
+def test_health_endpoint_no_api_key(client, api_key):
+    response = client.get("/api/health")
+    assert response.status_code == 200
+
+
+def test_image_endpoint_no_api_key(client, api_key):
+    response = client.get("/api/images/nonexistent.jpg")
+    assert response.status_code != 401
 
