@@ -174,16 +174,14 @@ resource "aws_security_group" "eks_nodes" {
   description = "Security group for EKS worker nodes"
   vpc_id      = aws_vpc.knowcars.id
 
-  # Rule 1: NLB → NodePort range.
-  # Kubernetes assigns a NodePort (30000-32767) for the flask-service LoadBalancer.
-  # The NLB forwards external traffic to this NodePort on each node.
-  # NLB preserves client source IP so we cannot restrict by security group.
+  # Rule 1: ALB → Flask pods (target-type: ip bypasses NodePort entirely).
+  # The ALB lives in public subnets (10.0.0-1.0/24) and targets pod IPs directly.
   ingress {
-    description = "NLB traffic to NodePort range"
-    from_port   = 30000
-    to_port     = 32767
+    description = "ALB to Flask pods (target-type: ip)"
+    from_port   = 5000
+    to_port     = 5000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["10.0.0.0/16"]
   }
 
   # Rule 2: MySQL traffic from EKS nodes only (Flask pod → MySQL pod).
@@ -612,9 +610,52 @@ resource "aws_eks_addon" "ebs_csi_driver" {
 # ───────────────────────────────────────────────────────────────────────────────
 # OUTPUTS
 # ───────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────────────────────
+# AWS LOAD BALANCER CONTROLLER — IAM policy and IRSA role
+# ───────────────────────────────────────────────────────────────────────────────
+
+resource "aws_iam_policy" "lbc" {
+  name   = "knowcars-lbc-policy"
+  policy = file("${path.module}/lbc-iam-policy.json")
+}
+
+resource "aws_iam_role" "lbc" {
+  name = "knowcars-lbc-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.eks.arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+          "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:aud" = "sts.amazonaws.com"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lbc" {
+  role       = aws_iam_role.lbc.name
+  policy_arn = aws_iam_policy.lbc.arn
+}
+
+# ───────────────────────────────────────────────────────────────────────────────
+# OUTPUTS
+# ───────────────────────────────────────────────────────────────────────────────
 output "github_actions_role_arn" {
   description = "ARN of the manually-managed GitHub Actions IAM role"
   value       = local.github_actions_role_arn
+}
+
+output "lbc_role_arn" {
+  description = "IAM role ARN for the AWS Load Balancer Controller"
+  value       = aws_iam_role.lbc.arn
 }
 
 output "eks_cluster_name" {
