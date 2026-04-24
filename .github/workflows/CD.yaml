@@ -59,7 +59,8 @@ jobs:
             -output pretty \
             -kubernetes-version 1.29.0 \
             flask_deployment/flask-configMap.yaml \
-            flask_deployment/flask-service.yaml
+            flask_deployment/flask-service.yaml \
+            flask_deployment/flask-ingress.yaml
 
       - name: Validate MySQL manifests
         env:
@@ -128,16 +129,16 @@ jobs:
             --region ${{ secrets.AWS_REGION }} \
             --name   ${{ secrets.EKS_CLUSTER_NAME }} || true
 
-      # The Kubernetes CLB/NLB created by flask-service (type: LoadBalancer) is NOT
-      # managed by Terraform. Deleting the namespace removes the service and triggers
-      # the AWS cloud controller to deprovision the CLB. If we skip this, Terraform
-      # can't delete the subnets or detach the IGW (DependencyViolation).
-      - name: Delete Kubernetes namespace to deprovision CLB/NLB
+      # The ALB created by the AWS Load Balancer Controller (via flask-ingress) is NOT
+      # managed by Terraform. Deleting the namespace removes the Ingress and triggers
+      # the LBC to deprovision the ALB. If we skip this, Terraform can't delete the
+      # subnets or detach the IGW (DependencyViolation).
+      - name: Delete Kubernetes namespace to deprovision ALB
         if: ${{ inputs.action == 'destroy' }}
         run: |
           kubectl delete namespace knowcars --ignore-not-found --timeout=120s || true
 
-      - name: Wait for CLB/NLB to be fully deprovisioned
+      - name: Wait for ALB to be fully deprovisioned
         if: ${{ inputs.action == 'destroy' }}
         run: |
           VPC_ID=$(aws ec2 describe-vpcs \
@@ -146,16 +147,12 @@ jobs:
             --query 'Vpcs[0].VpcId' --output text)
           echo "VPC: $VPC_ID"
           for i in $(seq 1 20); do
-            CLB_COUNT=$(aws elb describe-load-balancers \
-              --region ${{ secrets.AWS_REGION }} \
-              --query "length(LoadBalancerDescriptions[?VPCId=='${VPC_ID}'])" \
-              --output text 2>/dev/null || echo "0")
-            NLB_COUNT=$(aws elbv2 describe-load-balancers \
+            ALB_COUNT=$(aws elbv2 describe-load-balancers \
               --region ${{ secrets.AWS_REGION }} \
               --query "length(LoadBalancers[?VpcId=='${VPC_ID}'])" \
               --output text 2>/dev/null || echo "0")
-            echo "Attempt $i/20 — CLB: $CLB_COUNT  NLB: $NLB_COUNT"
-            if [ "$CLB_COUNT" = "0" ] && [ "$NLB_COUNT" = "0" ]; then
+            echo "Attempt $i/20 — ALB: $ALB_COUNT"
+            if [ "$ALB_COUNT" = "0" ]; then
               echo "All load balancers removed, proceeding with destroy"
               break
             fi
@@ -198,6 +195,26 @@ jobs:
             --region ${{ secrets.AWS_REGION }} \
             --name   ${{ secrets.EKS_CLUSTER_NAME }}
 
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Install AWS Load Balancer Controller
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          LBC_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/knowcars-lbc-role"
+          helm repo add eks https://aws.github.io/eks-charts
+          helm repo update eks
+          helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+            --namespace kube-system \
+            --set clusterName=${{ secrets.EKS_CLUSTER_NAME }} \
+            --set serviceAccount.create=true \
+            --set serviceAccount.name=aws-load-balancer-controller \
+            --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=${LBC_ROLE_ARN}" \
+            --wait \
+            --timeout 5m
+
       - name: Create namespace if not exists
         run: |
           kubectl get namespace knowcars || kubectl create namespace knowcars
@@ -209,6 +226,13 @@ jobs:
             --from-literal=MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
             --from-literal=MYSQL_USER=${{ secrets.MYSQL_USER }} \
             --from-literal=MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create/update flask-secret
+        run: |
+          kubectl create secret generic flask-secret \
+            --namespace knowcars \
+            --from-literal=API_KEY=${{ secrets.API_KEY }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
       # Get the SHORT_SHA from the last successful CI run
@@ -264,6 +288,7 @@ jobs:
         run: |
           kubectl apply -f flask_deployment/flask-configMap.yaml
           kubectl apply -f flask_deployment/flask-service.yaml
+          kubectl apply -f flask_deployment/flask-ingress.yaml
           envsubst < flask_deployment/flask-deployment.yaml | kubectl apply -f -
 
       - name: Wait for Flask rollout
@@ -272,51 +297,43 @@ jobs:
             --namespace knowcars \
             --timeout=180s
 
-      - name: Get NLB DNS name
-        id: nlb
+      - name: Get ALB DNS name
+        id: alb
         run: |
           for i in $(seq 1 20); do
-            DNS=$(kubectl get svc flask-service \
+            DNS=$(kubectl get ingress flask-ingress \
               --namespace knowcars \
               -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
             if [ -n "$DNS" ]; then
-              echo "NLB DNS: $DNS"
+              echo "ALB DNS: $DNS"
               echo "dns=$DNS" >> $GITHUB_OUTPUT
               exit 0
             fi
-            echo "Waiting for NLB hostname... attempt $i/20"
+            echo "Waiting for ALB hostname... attempt $i/20"
             sleep 15
           done
-          echo "Timed out waiting for NLB hostname"
+          echo "Timed out waiting for ALB hostname"
           exit 1
 
       - name: Smoke test — API returns cars with images
         env:
-          DNS: ${{ steps.nlb.outputs.dns }}
+          DNS: ${{ steps.alb.outputs.dns }}
+          API_KEY: ${{ secrets.API_KEY }}
         run: |
-          echo "=== CLB diagnostics ==="
+          echo "=== ALB diagnostics ==="
           echo "DNS: $DNS"
-
-          # Show CLB scheme (internet-facing vs internal) and port mapping
-          CLB_NAME=$(aws elb describe-load-balancers --region ${{ secrets.AWS_REGION }} \
-            --query "LoadBalancerDescriptions[?DNSName=='${DNS}'].LoadBalancerName" \
-            --output text)
-          echo "CLB name: $CLB_NAME"
-          aws elb describe-load-balancers --region ${{ secrets.AWS_REGION }} \
-            --load-balancer-names "$CLB_NAME" \
-            --query 'LoadBalancerDescriptions[0].{Scheme:Scheme,Subnets:Subnets,Listeners:ListenerDescriptions[*].Listener}' \
+          aws elbv2 describe-load-balancers \
+            --region ${{ secrets.AWS_REGION }} \
+            --query "LoadBalancers[?DNSName=='${DNS}'].{Scheme:Scheme,State:State,VpcId:VpcId}" \
             --output json
-
-          echo ""
-          echo "=== Flask service NodePort ==="
-          kubectl get svc flask-service -n knowcars
 
           echo ""
           echo "=== Smoke test ==="
           for i in $(seq 1 10); do
             HTTP_CODE=$(curl -s -o /tmp/smoke_body.txt -w "%{http_code}" \
               --max-time 10 \
-              "http://${DNS}:5000/api/cars?include=image" || true)
+              -H "X-API-Key: ${API_KEY}" \
+              "http://${DNS}/api/cars?include=image" || true)
             CURL_EXIT=$?
             echo "Attempt $i/10 — curl exit=$CURL_EXIT HTTP=$HTTP_CODE"
             if [ "$CURL_EXIT" != "0" ]; then
@@ -360,15 +377,15 @@ jobs:
             --region ${{ secrets.AWS_REGION }} \
             --name   ${{ secrets.EKS_CLUSTER_NAME }}
 
-      - name: Get CLB DNS from flask-service
-        id: clb
+      - name: Get ALB DNS from flask-ingress
+        id: alb
         run: |
-          DNS=$(kubectl get svc flask-service \
+          DNS=$(kubectl get ingress flask-ingress \
             --namespace knowcars \
             -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-          echo "CLB DNS: $DNS"
+          echo "ALB DNS: $DNS"
           if [ -z "$DNS" ]; then
-            echo "ERROR: flask-service has no external hostname"
+            echo "ERROR: flask-ingress has no external hostname"
             exit 1
           fi
           echo "dns=$DNS" >> $GITHUB_OUTPUT
@@ -386,7 +403,8 @@ jobs:
       - name: Build React app
         run: cd frontend_react && npm run build
         env:
-          REACT_APP_API_URL: http://${{ steps.clb.outputs.dns }}:5000
+          REACT_APP_API_URL: http://${{ steps.alb.outputs.dns }}
+          REACT_APP_API_KEY: ${{ secrets.API_KEY }}
 
       - name: Upload build to S3
         run: |

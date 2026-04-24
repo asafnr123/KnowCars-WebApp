@@ -1,13 +1,25 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import uuid
+import os
 from backend_api.car import Car
 from backend_api.mysqlConnection import get_connection
 
 
 carApi = Flask(__name__)
 carApi.config['IMAGES_FOLDER'] = './images'
-CORS(carApi)
+CORS(carApi, allow_headers=["X-API-Key", "Content-Type"])
+
+API_KEY = os.environ.get("API_KEY")
+
+EXCLUDED_PATHS = {"/api/health", "/api/health/ready"}
+
+@carApi.before_request
+def check_api_key():
+    if request.method == "OPTIONS" or request.path in EXCLUDED_PATHS or request.path.startswith("/api/images/"):
+        return
+    if API_KEY and request.headers.get("X-API-Key") != API_KEY:
+        return jsonify({"error": "Unauthorized"}), 401
 
 @carApi.route("/", methods=['GET'])
 def Home_Page():
