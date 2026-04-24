@@ -215,6 +215,20 @@ jobs:
             --wait \
             --timeout 5m
 
+      - name: Wait for LBC webhook to be ready
+        run: |
+          for i in $(seq 1 18); do
+            READY=$(kubectl get endpoints aws-load-balancer-webhook-service \
+              -n kube-system \
+              -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true)
+            if [ -n "$READY" ]; then
+              echo "LBC webhook endpoint is ready ($READY)"
+              break
+            fi
+            echo "Waiting for LBC webhook endpoint... attempt $i/18"
+            sleep 10
+          done
+
       - name: Create namespace if not exists
         run: |
           kubectl get namespace knowcars || kubectl create namespace knowcars
