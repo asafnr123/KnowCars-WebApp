@@ -16,7 +16,7 @@ EXCLUDED_PATHS = {"/api/health", "/api/health/ready"}
 
 @carApi.before_request
 def check_api_key():
-    if request.path in EXCLUDED_PATHS:
+    if request.method == "OPTIONS" or request.path in EXCLUDED_PATHS:
         return
     if API_KEY and request.headers.get("X-API-Key") != API_KEY:
         return jsonify({"error": "Unauthorized"}), 401
