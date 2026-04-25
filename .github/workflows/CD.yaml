@@ -236,21 +236,8 @@ jobs:
 
             if [ -n "$EP_IP" ] && [ "$DESIRED" != "0" ] && [ "$READY" = "$DESIRED" ] && [ "$CA_LEN" -gt 10 ]; then
               echo "  infrastructure ready — probing webhook with a server-side dry-run Service apply"
-              cat <<EOF > /tmp/webhook-probe.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: lbc-webhook-probe
-  namespace: kube-system
-spec:
-  selector:
-    app: probe
-  ports:
-    - port: 80
-      targetPort: 8080
-  type: ClusterIP
-EOF
-              if kubectl apply --dry-run=server -f /tmp/webhook-probe.yaml 2>&1; then
+              if printf 'apiVersion: v1\nkind: Service\nmetadata:\n  name: lbc-webhook-probe\n  namespace: kube-system\nspec:\n  selector:\n    app: probe\n  ports:\n  - port: 80\n    targetPort: 8080\n  type: ClusterIP\n' \
+                | kubectl apply --dry-run=server -f - 2>&1; then
                 echo "Webhook dry-run succeeded — LBC webhook is fully ready"
                 break
               fi
