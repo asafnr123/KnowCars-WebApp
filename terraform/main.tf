@@ -210,6 +210,14 @@ resource "aws_security_group" "eks_nodes" {
     security_groups = [aws_security_group.eks_cluster.id]
   }
 
+  ingress {
+    description     = "EKS control plane to admission webhook servers (e.g. LBC on port 9443)"
+    from_port       = 9443
+    to_port         = 9443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks_cluster.id]
+  }
+
   # Rule 4: Allow nodes to talk to each other (required for pod networking / CNI)
   ingress {
     description = "Node to node communication"
