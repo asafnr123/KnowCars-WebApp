@@ -217,16 +217,39 @@ jobs:
 
       - name: Wait for LBC webhook to be ready
         run: |
-          for i in $(seq 1 18); do
-            READY=$(kubectl get endpoints aws-load-balancer-webhook-service \
+          for i in $(seq 1 30); do
+            EP_IP=$(kubectl get endpoints aws-load-balancer-webhook-service \
               -n kube-system \
               -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true)
-            if [ -n "$READY" ]; then
-              echo "LBC webhook endpoint is ready ($READY)"
-              break
+
+            DESIRED=$(kubectl get deployment aws-load-balancer-controller \
+              -n kube-system \
+              -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+            READY=$(kubectl get deployment aws-load-balancer-controller \
+              -n kube-system \
+              -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+
+            echo "Attempt $i/30 — endpoint IP: ${EP_IP:-none}  pods ready: ${READY:-0}/${DESIRED:-0}"
+
+            if [ -n "$EP_IP" ] && [ "$DESIRED" != "0" ] && [ "$READY" = "$DESIRED" ]; then
+              kubectl port-forward -n kube-system svc/aws-load-balancer-webhook-service 19443:443 \
+                >/dev/null 2>&1 &
+              PF_PID=$!
+              sleep 2
+              if nc -zw3 localhost 19443 2>/dev/null; then
+                echo "All $READY/$DESIRED LBC pods ready, endpoint IP $EP_IP, webhook port 9443 accepting connections"
+                kill $PF_PID 2>/dev/null || true
+                break
+              fi
+              kill $PF_PID 2>/dev/null || true
+              echo "  pods ready but webhook port not yet accepting — retrying"
             fi
-            echo "Waiting for LBC webhook endpoint... attempt $i/18"
+
             sleep 10
+            if [ "$i" = "30" ]; then
+              echo "ERROR: LBC webhook did not become ready in time"
+              exit 1
+            fi
           done
 
       - name: Create namespace if not exists
