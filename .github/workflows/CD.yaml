@@ -229,20 +229,17 @@ jobs:
               -n kube-system \
               -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
 
-            echo "Attempt $i/30 — endpoint IP: ${EP_IP:-none}  pods ready: ${READY:-0}/${DESIRED:-0}"
+            # caBundle is injected by the LBC cert-rotation controller after the
+            # webhook TLS server finishes initializing. Without it the API server
+            # cannot validate the webhook cert, so this is the definitive readiness signal.
+            CA_LEN=$(kubectl get mutatingwebhookconfiguration aws-load-balancer-webhook \
+              -o jsonpath='{.webhooks[0].clientConfig.caBundle}' 2>/dev/null | wc -c || echo "0")
 
-            if [ -n "$EP_IP" ] && [ "$DESIRED" != "0" ] && [ "$READY" = "$DESIRED" ]; then
-              kubectl port-forward -n kube-system svc/aws-load-balancer-webhook-service 19443:443 \
-                >/dev/null 2>&1 &
-              PF_PID=$!
-              sleep 2
-              if nc -zw3 localhost 19443 2>/dev/null; then
-                echo "All $READY/$DESIRED LBC pods ready, endpoint IP $EP_IP, webhook port 9443 accepting connections"
-                kill $PF_PID 2>/dev/null || true
-                break
-              fi
-              kill $PF_PID 2>/dev/null || true
-              echo "  pods ready but webhook port not yet accepting — retrying"
+            echo "Attempt $i/30 — endpoint IP: ${EP_IP:-none}  pods ready: ${READY:-0}/${DESIRED:-0}  caBundle bytes: ${CA_LEN}"
+
+            if [ -n "$EP_IP" ] && [ "$DESIRED" != "0" ] && [ "$READY" = "$DESIRED" ] && [ "$CA_LEN" -gt 10 ]; then
+              echo "All $READY/$DESIRED LBC pods ready, endpoint IP $EP_IP, caBundle populated (${CA_LEN} bytes) — LBC webhook is ready"
+              break
             fi
 
             sleep 10
