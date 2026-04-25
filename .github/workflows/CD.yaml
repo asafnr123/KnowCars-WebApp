@@ -229,17 +229,32 @@ jobs:
               -n kube-system \
               -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
 
-            # caBundle is injected by the LBC cert-rotation controller after the
-            # webhook TLS server finishes initializing. Without it the API server
-            # cannot validate the webhook cert, so this is the definitive readiness signal.
             CA_LEN=$(kubectl get mutatingwebhookconfiguration aws-load-balancer-webhook \
               -o jsonpath='{.webhooks[0].clientConfig.caBundle}' 2>/dev/null | wc -c || echo "0")
 
             echo "Attempt $i/30 — endpoint IP: ${EP_IP:-none}  pods ready: ${READY:-0}/${DESIRED:-0}  caBundle bytes: ${CA_LEN}"
 
             if [ -n "$EP_IP" ] && [ "$DESIRED" != "0" ] && [ "$READY" = "$DESIRED" ] && [ "$CA_LEN" -gt 10 ]; then
-              echo "All $READY/$DESIRED LBC pods ready, endpoint IP $EP_IP, caBundle populated (${CA_LEN} bytes) — LBC webhook is ready"
-              break
+              echo "  infrastructure ready — probing webhook with a server-side dry-run Service apply"
+              cat <<EOF > /tmp/webhook-probe.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: lbc-webhook-probe
+  namespace: kube-system
+spec:
+  selector:
+    app: probe
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
+EOF
+              if kubectl apply --dry-run=server -f /tmp/webhook-probe.yaml 2>&1; then
+                echo "Webhook dry-run succeeded — LBC webhook is fully ready"
+                break
+              fi
+              echo "  webhook not yet responding to dry-run — retrying"
             fi
 
             sleep 10
