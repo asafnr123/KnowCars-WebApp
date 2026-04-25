@@ -349,6 +349,14 @@ jobs:
             sleep 15
           done
           echo "Timed out waiting for ALB hostname"
+          echo ""
+          echo "=== Ingress events ==="
+          kubectl describe ingress flask-ingress --namespace knowcars
+          echo ""
+          echo "=== LBC logs (last 50 lines) ==="
+          kubectl logs -n kube-system \
+            -l app.kubernetes.io/name=aws-load-balancer-controller \
+            --tail=50
           exit 1
 
       - name: Smoke test — API returns cars with images
