@@ -24,7 +24,7 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       CARS_DB: knowCarsDB
-      API_KEY: ${API_KEY}
+      CORS_ORIGINS: "http://localhost:3000"
     depends_on:
       mysql:
         condition: service_healthy

@@ -265,13 +265,6 @@ jobs:
             --from-literal=MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Create/update flask-secret
-        run: |
-          kubectl create secret generic flask-secret \
-            --namespace knowcars \
-            --from-literal=API_KEY=${{ secrets.API_KEY }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-
       # Get the SHORT_SHA from the last successful CI run
       - name: Get latest successful CI run ID
         id: ci_run
@@ -363,7 +356,6 @@ jobs:
       - name: Smoke test — API returns cars with images
         env:
           DNS: ${{ steps.alb.outputs.dns }}
-          API_KEY: ${{ secrets.API_KEY }}
         run: |
           echo "=== ALB diagnostics ==="
           echo "DNS: $DNS"
@@ -374,13 +366,14 @@ jobs:
 
           echo ""
           echo "=== Smoke test ==="
-          for i in $(seq 1 10); do
+          echo "Waiting 60s for ALB targets to register and become healthy..."
+          sleep 60
+          for i in $(seq 1 15); do
             HTTP_CODE=$(curl -s -o /tmp/smoke_body.txt -w "%{http_code}" \
               --max-time 10 \
-              -H "X-API-Key: ${API_KEY}" \
-              "http://${DNS}/api/cars?include=image" || true)
+              "http://${DNS}/api/cars?include=image")
             CURL_EXIT=$?
-            echo "Attempt $i/10 — curl exit=$CURL_EXIT HTTP=$HTTP_CODE"
+            echo "Attempt $i/15 — curl exit=$CURL_EXIT HTTP=$HTTP_CODE"
             if [ "$CURL_EXIT" != "0" ]; then
               echo "  curl error $CURL_EXIT (52=empty reply, 28=timeout, 7=refused)"
             fi
@@ -388,7 +381,10 @@ jobs:
               echo "Smoke test passed"
               exit 0
             fi
-            sleep 10
+            if [ -s /tmp/smoke_body.txt ]; then
+              echo "  response body: $(cat /tmp/smoke_body.txt)"
+            fi
+            sleep 15
           done
           echo "Smoke test failed"
           exit 1
@@ -449,7 +445,6 @@ jobs:
         run: cd frontend_react && npm run build
         env:
           REACT_APP_API_URL: http://${{ steps.alb.outputs.dns }}
-          REACT_APP_API_KEY: ${{ secrets.API_KEY }}
 
       - name: Upload build to S3
         run: |

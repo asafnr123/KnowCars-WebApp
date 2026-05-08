@@ -48,11 +48,6 @@ def missing_required_fields_car():
     }
 
 
-@pytest.fixture
-def api_key(mocker):
-    mocker.patch("backend_api.carAPI.API_KEY", "test-key")
-    return "test-key"
-
 
 # ── GET /api/cars ─────────────────────────────────────────────────────────────
 
@@ -365,40 +360,25 @@ def test_get_car_image_db_error(client, mock_db):
     assert "error" in response.get_json()
 
 
-# ── API key tests ─────────────────────────────────────────────────────────────
+# ── CORS tests ────────────────────────────────────────────────────────────────
 
-def test_request_without_api_key_rejected(client, api_key):
-    response = client.get("/api/cars")
-    assert response.status_code == 401
-    assert "error" in response.get_json()
-
-
-def test_request_with_correct_api_key_allowed(client, mock_db, api_key):
-    mock_cursor, mock_connection = mock_db
-    mock_cursor.fetchall.return_value = []
-    response = client.get("/api/cars", headers={"X-API-Key": "test-key"})
-    assert response.status_code == 200
-
-
-def test_request_with_wrong_api_key_rejected(client, api_key):
-    response = client.get("/api/cars", headers={"X-API-Key": "wrong-key"})
-    assert response.status_code == 401
-
-
-def test_cors_preflight_allowed_without_api_key(client, api_key):
+def test_cors_preflight_from_allowed_origin(client):
     response = client.options("/api/cars", headers={
         "Origin": "http://localhost:3000",
         "Access-Control-Request-Method": "GET",
-        "Access-Control-Request-Headers": "X-API-Key"
     })
     assert response.status_code == 200
 
 
-def test_health_endpoint_no_api_key(client, api_key):
-    response = client.get("/api/health")
-    assert response.status_code == 200
+def test_cors_header_present_for_allowed_origin(client, mock_db):
+    mock_cursor, mock_connection = mock_db
+    mock_cursor.fetchall.return_value = []
+    response = client.get("/api/cars", headers={"Origin": "http://localhost:3000"})
+    assert response.headers.get("Access-Control-Allow-Origin") == "http://localhost:3000"
 
 
-def test_image_endpoint_no_api_key(client, api_key):
-    response = client.get("/api/images/nonexistent.jpg")
-    assert response.status_code != 401
+def test_cors_header_absent_for_unknown_origin(client, mock_db):
+    mock_cursor, mock_connection = mock_db
+    mock_cursor.fetchall.return_value = []
+    response = client.get("/api/cars", headers={"Origin": "http://evil.com"})
+    assert response.headers.get("Access-Control-Allow-Origin") != "http://evil.com"
