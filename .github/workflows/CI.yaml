@@ -31,7 +31,7 @@ jobs:
 
       # Install dependencies
       - name: install dependencies
-        run: pip install -r requirements-test.txt && cd ./frontend_react && npm ci
+        run: pip install -r requirements-prod.txt && cd ./frontend_react && npm ci
 
       # Create .env file from secrets
       - name: Create .env file

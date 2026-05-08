@@ -56,6 +56,8 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: MYSQL_PASSWORD
+            - name: CORS_ORIGINS
+              value: "http://knowcars-frontend.s3-website.eu-central-1.amazonaws.com"
 
           resources:
             requests:

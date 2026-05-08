@@ -1,13 +1,15 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import uuid
+import os
 from backend_api.car import Car
 from backend_api.mysqlConnection import get_connection
 
 
 carApi = Flask(__name__)
 carApi.config['IMAGES_FOLDER'] = './images'
-CORS(carApi)
+CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+CORS(carApi, origins=CORS_ORIGINS)
 
 @carApi.route("/", methods=['GET'])
 def Home_Page():
