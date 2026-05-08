@@ -115,11 +115,11 @@ check_cors_origin_header() {
     local url=$1
     local origin=${2:-"http://localhost:3000"}
 
-    acao=$(curl -s -o /dev/null -w "%{header_json}" \
+    acao=$(curl -s -D - -o /dev/null \
         -H "Origin: $origin" "$url" \
-        | grep -o '"access-control-allow-origin":"[^"]*"' \
-        | grep -o '"[^"]*"$' \
-        | tr -d '"')
+        | grep -i "^access-control-allow-origin:" \
+        | tr -d '\r' \
+        | awk '{print $2}')
 
     if [ "$acao" = "$origin" ]; then
         echo "CORS origin header correct for $url (origin: $origin)"
