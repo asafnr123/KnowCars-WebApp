@@ -366,12 +366,14 @@ jobs:
 
           echo ""
           echo "=== Smoke test ==="
-          for i in $(seq 1 10); do
+          echo "Waiting 60s for ALB targets to register and become healthy..."
+          sleep 60
+          for i in $(seq 1 15); do
             HTTP_CODE=$(curl -s -o /tmp/smoke_body.txt -w "%{http_code}" \
               --max-time 10 \
-              "http://${DNS}/api/cars?include=image" || true)
+              "http://${DNS}/api/cars?include=image")
             CURL_EXIT=$?
-            echo "Attempt $i/10 — curl exit=$CURL_EXIT HTTP=$HTTP_CODE"
+            echo "Attempt $i/15 — curl exit=$CURL_EXIT HTTP=$HTTP_CODE"
             if [ "$CURL_EXIT" != "0" ]; then
               echo "  curl error $CURL_EXIT (52=empty reply, 28=timeout, 7=refused)"
             fi
@@ -379,7 +381,10 @@ jobs:
               echo "Smoke test passed"
               exit 0
             fi
-            sleep 10
+            if [ -s /tmp/smoke_body.txt ]; then
+              echo "  response body: $(cat /tmp/smoke_body.txt)"
+            fi
+            sleep 15
           done
           echo "Smoke test failed"
           exit 1
