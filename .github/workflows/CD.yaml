@@ -265,13 +265,6 @@ jobs:
             --from-literal=MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Create/update flask-secret
-        run: |
-          kubectl create secret generic flask-secret \
-            --namespace knowcars \
-            --from-literal=API_KEY=${{ secrets.API_KEY }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-
       # Get the SHORT_SHA from the last successful CI run
       - name: Get latest successful CI run ID
         id: ci_run
@@ -363,7 +356,6 @@ jobs:
       - name: Smoke test — API returns cars with images
         env:
           DNS: ${{ steps.alb.outputs.dns }}
-          API_KEY: ${{ secrets.API_KEY }}
         run: |
           echo "=== ALB diagnostics ==="
           echo "DNS: $DNS"
@@ -377,7 +369,6 @@ jobs:
           for i in $(seq 1 10); do
             HTTP_CODE=$(curl -s -o /tmp/smoke_body.txt -w "%{http_code}" \
               --max-time 10 \
-              -H "X-API-Key: ${API_KEY}" \
               "http://${DNS}/api/cars?include=image" || true)
             CURL_EXIT=$?
             echo "Attempt $i/10 — curl exit=$CURL_EXIT HTTP=$HTTP_CODE"
@@ -449,7 +440,6 @@ jobs:
         run: cd frontend_react && npm run build
         env:
           REACT_APP_API_URL: http://${{ steps.alb.outputs.dns }}
-          REACT_APP_API_KEY: ${{ secrets.API_KEY }}
 
       - name: Upload build to S3
         run: |
